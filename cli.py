@@ -625,6 +625,13 @@ def normalize_context_steps(steps, request_text=""):
     explicit_target = extract_explicit_python_target(request_text)
     explicit_target_base = os.path.basename(explicit_target) if explicit_target else None
 
+    if explicit_target_base and explicit_target_base not in JARVIS_APP_FILES:
+        project_root = get_project_state("project_root")
+        if project_root:
+            candidate = os.path.join(project_root, explicit_target_base)
+            if os.path.exists(candidate):
+                explicit_target = candidate
+
     jarvis_self_request = is_jarvis_self_request(request_text)
     jarvis_target_file = infer_jarvis_target_file(request_text)
 
