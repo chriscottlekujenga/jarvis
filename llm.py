@@ -195,7 +195,11 @@ Current file:
         "stream": False,
     }
 
-    r = requests.post(f"{OLLAMA_HOST}/api/generate", json=payload, timeout=180)
+    try:
+        r = requests.post(f"{OLLAMA_HOST}/api/generate", json=payload, timeout=60)
+        r.raise_for_status()
+    except Exception:
+        return _fallback_context_plan(user_request)
     r.raise_for_status()
 
     return _clean_text(r.json()["response"])
