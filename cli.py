@@ -227,6 +227,19 @@ def is_context_instruction(step):
 
 
 def is_vague_edit_instruction(instruction):
+    lowered = (instruction or "").strip().lower()
+
+    vague_exact = {
+        "add logging",
+        "improve logging",
+        "add comments",
+        "improve comments",
+        "clean up code",
+        "refactor code",
+    }
+    if lowered in vague_exact:
+        return True
+
     if not isinstance(instruction, str):
         return False
 
