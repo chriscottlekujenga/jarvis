@@ -1485,7 +1485,8 @@ def run_edit(step):
     elif "logging" in instruction.lower() and target_function == "main":
         print("[DETERMINISTIC EDIT] logging setup")
         if "logging.basicConfig(" in old:
-            return record_edit_failure("already_satisfied", "No edit needed: logging is already configured")
+            print("[NO-OP] already satisfied")
+            return True
         if "import logging" not in old:
             old = "import logging\n" + old
         new = old.replace(
