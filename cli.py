@@ -1800,6 +1800,12 @@ def context_mode(request=None):
             set_current_dir(project_root)
     request = build_retry_aware_context_request(request)
 
+    lowered = request.lower()
+    if "change cli.py" in lowered or "edit cli.py" in lowered:
+        print("\n[FAST PATH] skipping planner")
+        execute_plan([f"edit cli.py to {request.replace('continue', '').strip()}"])
+        return
+
     cwd = get_current_dir()
 
     print(f"\n[Context Mode] cwd: {cwd}")
