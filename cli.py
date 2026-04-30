@@ -1060,6 +1060,9 @@ def infer_target_function(file_path, file_text, instruction):
 
     lowered_instruction = (instruction or "").lower()
 
+    if "top of file" in lowered_instruction or "top of the file" in lowered_instruction:
+        return None
+
     # 1. Prefer exact mentioned function names anywhere in the instruction.
     mentioned_exact = []
     for item in functions:
