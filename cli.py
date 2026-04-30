@@ -1420,6 +1420,7 @@ def run_edit(step):
     instruction = strengthen_edit_instruction(instruction)
 
     file_path = resolve_edit_file_path(file_name)
+    print(f"[TARGET RESOLVED] {file_name} -> {file_path}")
     old = read_file_text(file_path) if os.path.exists(file_path) else ""
     is_new_file = not os.path.exists(file_path)
     print(f"\n[EDIT] {file_path}")
