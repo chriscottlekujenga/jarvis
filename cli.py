@@ -1813,6 +1813,8 @@ def context_mode(request=None):
                 if instruction.lower().startswith(prefix):
                     instruction = instruction[len(prefix):].strip()
                     break
+            if "top of the file" in instruction.lower():
+                instruction = f"insert at top of file: {instruction}"
             execute_plan([f"edit {file_name} to {instruction}"])
             return
 
