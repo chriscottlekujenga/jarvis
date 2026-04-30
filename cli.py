@@ -1803,7 +1803,12 @@ def context_mode(request=None):
     lowered = request.lower()
     if "change cli.py" in lowered or "edit cli.py" in lowered:
         print("\n[FAST PATH] skipping planner")
-        execute_plan([f"edit cli.py to {request.replace('continue', '').strip()}"])
+        instruction = request.replace("continue", "").strip()
+        for prefix in ("change cli.py to ", "edit cli.py to "):
+            if instruction.lower().startswith(prefix):
+                instruction = instruction[len(prefix):].strip()
+                break
+        execute_plan([f"edit cli.py to {instruction}"])
         return
 
     cwd = get_current_dir()
