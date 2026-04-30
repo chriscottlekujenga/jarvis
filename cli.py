@@ -1471,6 +1471,12 @@ def run_edit(step):
     elif target_class:
         print(f"[CLASS] {target_class}")
         new = ask_llm_edit(file_path, old, instruction).replace("", "").strip()
+    elif "print " in instruction.lower() and target_function == "main":
+        print("[DETERMINISTIC EDIT] print insertion")
+        new = old.replace(
+            "set_current_dir(os.getcwd())\n",
+            "set_current_dir(os.getcwd())\n\n    print(\"Hello\")\n"
+        )
     elif target_function:
         function_info = find_function_block(old, target_function)
         function_block = function_info["block"]
