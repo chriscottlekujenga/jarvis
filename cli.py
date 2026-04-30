@@ -2217,7 +2217,6 @@ def main():
     init_db()
     set_current_dir(os.getcwd())
     
-    
     print("Jarvis ready.")
     print(f"DB path: {DB_FILE}")
 
