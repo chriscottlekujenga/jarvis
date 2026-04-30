@@ -196,10 +196,10 @@ Current file:
     }
 
     try:
-        r = requests.post(f"{OLLAMA_HOST}/api/generate", json=payload, timeout=60)
+        r = requests.post(f"{OLLAMA_HOST}/api/generate", json=payload, timeout=180)
         r.raise_for_status()
-    except Exception:
-        return _fallback_context_plan(user_request)
+    except Exception as e:
+        raise RuntimeError(f"LLM edit request failed: {e}")
     r.raise_for_status()
 
     return _clean_text(r.json()["response"])
