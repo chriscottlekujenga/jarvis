@@ -624,6 +624,9 @@ def normalize_context_steps(steps, request_text=""):
             parts = s.split(" to ", 1)
             instruction = parts[1].strip() if len(parts) == 2 else s[5:].strip()
 
+            if is_vague_edit_instruction(instruction):
+                continue
+
             # Improve explicit file targeting comments
             if explicit_target_base:
                 for prefix in (
