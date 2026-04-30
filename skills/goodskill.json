@@ -1,0 +1,9 @@
+{
+  "name": "goodskill",
+  "created_at": "2026-03-21T14:06:45",
+  "variables": [],
+  "steps": [
+    "make folder Test"
+  ],
+  "raw_text": "1. make folder Test"
+}

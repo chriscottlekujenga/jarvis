@@ -1,0 +1,14 @@
+{
+  "name": "testskill",
+  "created_at": "2026-03-21T12:07:17",
+  "variables": [
+    "name"
+  ],
+  "steps": [
+    "create a folder named {name}",
+    "go into the {name} folder",
+    "initialize git",
+    "create a Python virtual environment"
+  ],
+  "raw_text": "1. create a folder named {name}\n2. go into the {name} folder\n3. initialize git\n4. create a Python virtual environment"
+}

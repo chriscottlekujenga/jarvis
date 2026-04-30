@@ -1,0 +1,30 @@
+{
+  "poll_interval_sec": 1.0,
+  "settle_time_sec": 1.0,
+  "max_wait_sec": 180.0,
+  "pause_patterns": [
+    "Use this plan? (y/n):",
+    "Run retry command? (y/n):",
+    "Diff Preview",
+    "=== Diff Preview ===",
+    "Enter skill name:",
+    "Variables >",
+    "Run it? (y/n):",
+    "Save changes? (y/n):"
+  ],
+  "failure_patterns": [
+    "[STOPPED] step failed",
+    "Rejected:",
+    "Traceback (most recent call last):",
+    "No command generated",
+    "Verifier rejected",
+    "Edit rejected",
+    "Step failed"
+  ],
+  "milestone_patterns": [
+    "[SUCCESS]",
+    "Saved skill:",
+    "Created:",
+    "Done."
+  ]
+}

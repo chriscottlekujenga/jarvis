@@ -1,0 +1,27 @@
+import os
+
+def rename_files_in_directory(directory_path):
+    try:
+        # List all files in the directory
+        files = os.listdir(directory_path)
+        
+        for filename in files:
+            # Construct full file path
+            old_file_path = os.path.join(directory_path, filename)
+            
+            # Check if it is a file and not a directory
+            if os.path.isfile(old_file_path):
+                # Define new file name (example: add prefix "new_")
+                new_file_name = f"new_{filename}"
+                new_file_path = os.path.join(directory_path, new_file_name)
+                
+                # Rename the file
+                os.rename(old_file_path, new_file_path)
+                print(f"Renamed '{old_file_path}' to '{new_file_path}'")
+    
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
+if __name__ == "__main__":
+    target_directory = "/path/to/your/target/directory"
+    rename_files_in_directory(target_directory)

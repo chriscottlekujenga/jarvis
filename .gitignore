@@ -1,0 +1,6 @@
+venv/
+__pycache__/
+*.pyc
+*.bak*
+*.log
+jarvis_memory.db

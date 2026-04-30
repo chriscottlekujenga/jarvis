@@ -1,0 +1,21 @@
+python
+import os
+
+def safe_file_path(base_directory, user_input):
+    # Normalize the path and resolve any symbolic links
+    normalized_path = os.path.normpath(os.path.join(base_directory, user_input))
+    
+    # Check if the normalized path is within the base directory
+    if not normalized_path.startswith(base_directory):
+        raise ValueError("Attempted directory traversal detected")
+    
+    return normalized_path
+
+# Example usage
+base_dir = "/safe/directory"
+user_input = "../unsafe/directory"
+try:
+    safe_path = safe_file_path(base_dir, user_input)
+    print("Safe path:", safe_path)
+except ValueError as e:
+    print(e)

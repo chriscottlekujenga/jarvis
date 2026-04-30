@@ -1,0 +1,11 @@
+{
+  "status": "stopped",
+  "jarvis_pid": null,
+  "last_request_id": "chat-1774382840",
+  "last_instruction": "</span><br><span>state</span><br><span>",
+  "last_result": "failed",
+  "waiting_for": "",
+  "updated_at": "2026-03-24T20:18:10.275196+00:00",
+  "last_output_at": "2026-03-24T20:18:10.275051+00:00",
+  "active_mode": "jarvis"
+}
