@@ -1477,6 +1477,14 @@ def run_edit(step):
             "set_current_dir(os.getcwd())\n",
             "set_current_dir(os.getcwd())\n\n    print(\"Hello\")\n"
         )
+    elif "logging" in instruction.lower() and target_function == "main":
+        print("[DETERMINISTIC EDIT] logging setup")
+        if "import logging" not in old:
+            old = "import logging\n" + old
+        new = old.replace(
+            "set_current_dir(os.getcwd())\n",
+            "set_current_dir(os.getcwd())\n\n    logging.basicConfig(level=logging.INFO)\n"
+        )
     elif target_function:
         function_info = find_function_block(old, target_function)
         function_block = function_info["block"]
