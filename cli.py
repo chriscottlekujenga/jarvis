@@ -637,6 +637,10 @@ def normalize_context_steps(steps, request_text=""):
             parts = s.split(" to ", 1)
             instruction = parts[1].strip() if len(parts) == 2 else s[5:].strip()
 
+            if "top of the file" in instruction.lower():
+                normalized.append(f"edit {resolve_edit_file_path(explicit_target_base or jarvis_target_file or main_script)} to insert at top of file: {instruction}")
+                continue
+
             if is_vague_edit_instruction(instruction):
                 continue
 
