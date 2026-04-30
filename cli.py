@@ -1796,6 +1796,11 @@ def execute_plan(steps):
             return False
 
     print("\n[SUCCESS] plan complete")
+
+    if any(is_edit_step(s) for s in steps):
+        print("\n[AUTO-RUN] executing project for validation")
+        run_project_script()
+
     return True
 
 
