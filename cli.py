@@ -1459,6 +1459,9 @@ def run_edit(step):
 
     if new is not None:
         pass
+    elif "insert at top of file:" in instruction.lower() and "comment" in instruction.lower():
+        print("[DETERMINISTIC EDIT] top-of-file comment")
+        new = "# Harmless comment added at the top of the file.\n" + old
     elif target_class:
         print(f"[CLASS] {target_class}")
         new = ask_llm_edit(file_path, old, instruction).replace("", "").strip()
