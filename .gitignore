@@ -4,3 +4,9 @@ __pycache__/
 *.bak*
 *.log
 jarvis_memory.db
+
+# all virtual environments
+venv/
+*/venv/
+*/myenv/
+.env/
