@@ -607,7 +607,6 @@ def infer_jarvis_target_file(text):
 
 def normalize_context_steps(steps, request_text=""):
     main_script = get_project_state("main_script_name")
-    known_files = [os.path.basename(path) for path in list_known_python_files()]
     normalized = []
 
     explicit_target = extract_explicit_python_target(request_text)
@@ -616,9 +615,6 @@ def normalize_context_steps(steps, request_text=""):
     jarvis_self_request = is_jarvis_self_request(request_text)
     jarvis_target_file = infer_jarvis_target_file(request_text)
 
-    if explicit_target_base and explicit_target_base not in JARVIS_APP_FILES:
-        jarvis_self_request = False
-
     for step in steps:
         s = step.strip().rstrip(".").replace("`", "")
         if not s:
@@ -626,96 +622,23 @@ def normalize_context_steps(steps, request_text=""):
 
         if is_edit_step(s):
             parts = s.split(" to ", 1)
-            target_part = parts[0][5:].strip() if len(parts) == 2 else ""
             instruction = parts[1].strip() if len(parts) == 2 else s[5:].strip()
 
-            if explicit_target and explicit_target_base not in JARVIS_APP_FILES:
-                if is_vague_edit_instruction(instruction):
-                    continue
-                normalized.append(f"edit {explicit_target} to {instruction}")
+            # 🔴 FORCE explicit file if user named one
+            if explicit_target_base:
+                target_path = resolve_edit_file_path(explicit_target_base)
+                normalized.append(f"edit {target_path} to {instruction}")
                 continue
 
-            if jarvis_self_request and s.startswith("edit "):
-                lowered_step = s.lower()
-                explicit_jarvis_file = any((
-                    f"edit {file_name.lower()} to " in lowered_step
-                    or f"edit {file_name[:-3].lower()} to " in lowered_step
-                    for file_name in JARVIS_APP_FILES
-                    if file_name.endswith(".py")
-                )) or any(f"edit {file_name.lower()} to " in lowered_step for file_name in JARVIS_APP_FILES)
-                if explicit_jarvis_file:
-                    normalized.append(s)
-                    continue
-
-            if is_vague_edit_instruction(instruction):
-                continue
-            if jarvis_self_request and not is_concrete_code_instruction(instruction):
-                continue
+            # 🔴 FORCE jarvis file if inferred
             if jarvis_self_request and jarvis_target_file:
-                normalized.append(f"edit {jarvis_target_file} to {instruction}")
-            else:
-                normalized.append(s)
-            continue
-
-        if is_context_instruction(s):
-            if explicit_target and explicit_target_base not in JARVIS_APP_FILES:
-                if is_vague_edit_instruction(s):
-                    continue
-                normalized.append(f"edit {explicit_target} to {s}")
+                target_path = resolve_edit_file_path(jarvis_target_file)
+                normalized.append(f"edit {target_path} to {instruction}")
                 continue
 
-            if jarvis_self_request:
-                if is_vague_edit_instruction(s):
-                    continue
-                if not is_concrete_code_instruction(s):
-                    continue
-                if jarvis_target_file:
-                    normalized.append(f"edit {jarvis_target_file} to {s}")
-                continue
-
-            target_file = None
-            lowered = s.lower()
-            for file_name in known_files:
-                if file_name.lower() in lowered:
-                    target_file = file_name
-                    break
-            if not target_file:
-                target_file = main_script
-            if target_file:
-                normalized.append(f"edit {target_file} to {s}")
-            continue
-
-        if is_run_step(s):
-            normalized.append("run the script against the sample files")
-            continue
-
-        lowered = s.lower()
-        planner_fluff_prefixes = (
-            "open ",
-            "save ",
-            "review ",
-            "inspect ",
-            "check ",
-            "verify ",
-            "locate ",
-            "look for ",
-            "make sure ",
-            "ensure ",
-        )
-        if lowered.startswith(planner_fluff_prefixes):
-            continue
-
-        interactive_prefixes = (
-            "nano ",
-            "vim ",
-            "vi ",
-            "less ",
-            "more ",
-            "man ",
-            "top ",
-            "htop ",
-        )
-        if lowered.startswith(interactive_prefixes):
+            # fallback to main script
+            target_path = resolve_edit_file_path(main_script)
+            normalized.append(f"edit {target_path} to {instruction}")
             continue
 
         if is_literal_shell_step(s):
