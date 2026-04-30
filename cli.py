@@ -1649,7 +1649,7 @@ def run_task_usefulness_validation(command, result, current_dir, run_mode=None):
         ok = os.path.isdir(git_dir)
         return ok, f"Task usefulness: git init created_git_dir={ok} path={git_dir}"
 
-    if "rename_files.py" in cmd_lower:
+    if "rename_files.py" in cmd_lower and "-m py_compile" not in cmd_lower:
         parts = command.strip().split()
         sample_dir = parts[-1] if parts else ""
         renamed = any(
