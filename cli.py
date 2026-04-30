@@ -1649,6 +1649,15 @@ def run_task_usefulness_validation(command, result, current_dir, run_mode=None):
         ok = os.path.isdir(git_dir)
         return ok, f"Task usefulness: git init created_git_dir={ok} path={git_dir}"
 
+    if "rename_files.py" in cmd_lower:
+        parts = command.strip().split()
+        sample_dir = parts[-1] if parts else ""
+        renamed = any(
+            f.startswith("renamed_")
+            for f in os.listdir(sample_dir)
+        ) if os.path.isdir(sample_dir) else False
+        return renamed, f"Task usefulness: rename_files renamed_files_exist={renamed} path={sample_dir}"
+
     return True, 'Task usefulness: no extra validation for this command.'
 
 
