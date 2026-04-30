@@ -1801,15 +1801,16 @@ def context_mode(request=None):
     request = build_retry_aware_context_request(request)
 
     lowered = request.lower()
-    if "change cli.py" in lowered or "edit cli.py" in lowered:
-        print("\n[FAST PATH] skipping planner")
-        instruction = request.replace("continue", "").strip()
-        for prefix in ("change cli.py to ", "edit cli.py to "):
-            if instruction.lower().startswith(prefix):
-                instruction = instruction[len(prefix):].strip()
-                break
-        execute_plan([f"edit cli.py to {instruction}"])
-        return
+    for file_name in JARVIS_APP_FILES:
+        if f"change {file_name}" in lowered or f"edit {file_name}" in lowered:
+            print("\n[FAST PATH] skipping planner")
+            instruction = request.replace("continue", "").strip()
+            for prefix in (f"change {file_name} to ", f"edit {file_name} to "):
+                if instruction.lower().startswith(prefix):
+                    instruction = instruction[len(prefix):].strip()
+                    break
+            execute_plan([f"edit {file_name} to {instruction}"])
+            return
 
     cwd = get_current_dir()
 
