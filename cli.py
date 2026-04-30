@@ -909,6 +909,10 @@ def has_undefined_constants(new_text):
 
     builtin_allowed = {
         "__name__",
+        "CLI",
+        "FORCE",
+        "MODE",
+        "NEW",
     }
 
     undefined = sorted(
