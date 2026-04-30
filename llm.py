@@ -388,7 +388,11 @@ STRICT PLAN CONTRACT:
   - refactor code
   - update user documentation
   - make miscellaneous improvements
-- Every edit instruction must describe a concrete code change to behavior, logic, parsing, validation, routing, output, or a specific function
+- Every edit instruction MUST specify:
+  - the exact function or location (e.g. inside main(), before program startup, at top of file)
+  - the exact code action (e.g. add print("hello"), insert logging.basicConfig(...) after imports)
+  - DO NOT describe the change in English only (e.g. "change cli.py to add...")
+  - DO NOT repeat the filename in the instruction
 - If the request is about fixing behavior, the edit instruction must describe the behavior being fixed
 - If the request is about improving output, the edit instruction must describe the exact output improvement
 - If the request is about routing, normalization, planning, verification, retry logic, parsing, diff limits, or project state, target the code that implements that behavior, not documentation

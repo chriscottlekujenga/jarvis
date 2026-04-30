@@ -624,6 +624,17 @@ def normalize_context_steps(steps, request_text=""):
             parts = s.split(" to ", 1)
             instruction = parts[1].strip() if len(parts) == 2 else s[5:].strip()
 
+            if explicit_target_base:
+                for prefix in (
+                    f"change {explicit_target_base} to ",
+                    f"modify {explicit_target_base} to ",
+                    f"update {explicit_target_base} to ",
+                    f"fix {explicit_target_base} to ",
+                ):
+                    if instruction.lower().startswith(prefix):
+                        instruction = instruction[len(prefix):].strip()
+                        break
+
             # 🔴 FORCE explicit file if user named one
             if explicit_target_base:
                 target_path = resolve_edit_file_path(explicit_target_base)
