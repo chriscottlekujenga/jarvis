@@ -624,6 +624,7 @@ def normalize_context_steps(steps, request_text=""):
             parts = s.split(" to ", 1)
             instruction = parts[1].strip() if len(parts) == 2 else s[5:].strip()
 
+            # Improve explicit file targeting comments
             if explicit_target_base:
                 for prefix in (
                     f"change {explicit_target_base} to ",
@@ -656,7 +657,6 @@ def normalize_context_steps(steps, request_text=""):
             normalized.append(s)
 
     return normalized
-
 def get_main_script_path():
     main_script = get_project_state("main_script")
     if main_script:
