@@ -1490,7 +1490,13 @@ def run_edit(step):
             return record_edit_failure("splice_failed", "Rejected: failed to splice edited function back into file")
     else:
         print("[FUNCTION] none inferred, using full-file fallback")
-        new = ask_llm_edit(file_path, old, instruction).replace("", "").strip()
+        new = ask_llm_edit(file_path, old, instruction).strip()
+
+        if new.count("import ") < old.count("import "):
+            return record_edit_failure("unsafe_full_file_edit", "Rejected: lost import statements")
+
+        if len(new) < len(old) * 0.5:
+            return record_edit_failure("unsafe_full_file_edit", "Rejected: file shrunk too much")
 
         if os.path.basename(file_path) == "cli.py":
             new = restore_unrelated_cli_functions(old, new, instruction)
