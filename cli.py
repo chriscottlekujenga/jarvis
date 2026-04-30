@@ -934,6 +934,11 @@ def has_undefined_constants(new_text):
         "MODE",
         "NEW",
         "IGNORECASE",
+        "INFO",
+        "DEBUG",
+        "WARNING",
+        "ERROR",
+        "CRITICAL",
     }
 
     undefined = sorted(
