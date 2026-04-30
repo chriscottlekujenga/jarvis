@@ -1781,6 +1781,11 @@ def build_retry_aware_context_request(request):
 
 
 def context_mode(request=None):
+    if request:
+        lowered = request.strip().lower()
+        if lowered in {"add logging", "improve logging"} or lowered.endswith("add logging"):
+            print("\n[ERROR] vague instruction blocked: add logging")
+            return
     if not request:
         request = input("Change > ").strip()
 
