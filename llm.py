@@ -434,8 +434,11 @@ User request:
     }
 
     # Sends the planning prompt to Ollama
-    r = requests.post(f"{OLLAMA_HOST}/api/generate", json=payload, timeout=180)
-    r.raise_for_status()
+    try:
+        r = requests.post(f"{OLLAMA_HOST}/api/generate", json=payload, timeout=45)
+        r.raise_for_status()
+    except Exception:
+        return _fallback_context_plan(user_request)
 
     text = _clean_text(r.json()["response"]).strip()
 
@@ -460,8 +463,12 @@ User request:
         "stream": False,
     }
 
-    r = requests.post(f"{OLLAMA_HOST}/api/generate", json=stricter_payload, timeout=180)
-    r.raise_for_status()
+    try:
+        r = requests.post(f"{OLLAMA_HOST}/api/generate", json=stricter_payload, timeout=45)
+        r.raise_for_status()
+    except Exception:
+        return _fallback_context_plan(user_request)
+
     retry_text = _clean_text(r.json()["response"]).strip()
 
     if retry_text and _looks_like_valid_context_plan(retry_text):
