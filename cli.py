@@ -1799,7 +1799,10 @@ def execute_plan(steps):
 
     if any(is_edit_step(s) for s in steps):
         print("\n[AUTO-RUN] executing project for validation")
-        run_project_script()
+        auto_ok = run_project_script()
+        if not auto_ok:
+            print("\n[STOPPED] auto-run validation failed")
+            return False
 
     return True
 
