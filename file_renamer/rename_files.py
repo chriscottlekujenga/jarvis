@@ -15,9 +15,10 @@ def rename_files_in_directory(directory):
         if not filename.startswith('renamed_'):
             new_file = os.path.join(directory, f"renamed_{filename}")
             os.rename(old_file, new_file)
-            print(f"Renamed {old_file} to {new_file}")
+            print(f"File '{old_file}' has been renamed to '{new_file}'")
             logging.info(f"Renamed '{old_file}' to '{new_file}'")
         else:
+            print(f"File '{old_file}' has already been renamed.")
             logging.info(f"File already renamed: {old_file}")
 if __name__ == "__main__":
     if len(sys.argv) != 2:
