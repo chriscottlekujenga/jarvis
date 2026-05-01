@@ -681,6 +681,10 @@ def normalize_context_steps(steps, request_text=""):
             continue
 
         if is_literal_shell_step(s):
+            # 🔴 BLOCK raw project script runs (auto-run handles this)
+            main_script = get_project_state("main_script_name")
+            if main_script and main_script in s:
+                continue
             normalized.append(s)
 
     return normalized
@@ -1443,6 +1447,14 @@ def run_edit(step):
     target_class = infer_target_class(old, instruction)
     requested_function = extract_requested_function_name(instruction)
 
+    lowered_instruction = (instruction or "").lower()
+    force_full_file_edit = (
+        "import " in lowered_instruction
+        or "from " in lowered_instruction
+        or "top of file" in lowered_instruction
+        or "top of the file" in lowered_instruction
+    )
+
     if requested_function and not find_function_block(old, requested_function):
         print(f"[FUNCTION] {requested_function} does not exist, generating function definition")
         new_function_definition = ask_llm_edit_function(
@@ -1481,6 +1493,11 @@ def run_edit(step):
         else:
             new_line = line
         new = new_line + "\n" + old
+    elif force_full_file_edit:
+        print("[FUNCTION] none inferred, using full-file fallback")
+
+        new = ask_llm_edit(file_path, old, instruction)
+
     elif target_class:
         print(f"[CLASS] {target_class}")
         new = ask_llm_edit(file_path, old, instruction).replace("", "").strip()
@@ -1801,8 +1818,21 @@ def execute_plan(steps):
         print("\n[AUTO-RUN] executing project for validation")
         auto_ok = run_project_script()
         if not auto_ok:
-            print("\n[STOPPED] auto-run validation failed")
-            return False
+            print("\n[RETRY] auto-run failed, attempting correction")
+
+            failure_instruction = "fix the error from the last run without breaking existing behavior"
+
+            retry_request = build_retry_aware_context_request(failure_instruction)
+
+            retry_steps = [f"edit {get_project_state('main_script_name')} to {retry_request}"]
+
+            retry_success = execute_plan(retry_steps)
+
+            if not retry_success:
+                print("\n[STOPPED] auto-run validation failed after retry")
+                return False
+
+            return True
 
     return True
 
@@ -1850,80 +1880,40 @@ def build_retry_aware_context_request(request):
 
 
 def context_mode(request=None):
-    if request:
-        lowered = request.strip().lower()
-        if lowered in {"add logging", "improve logging"} or lowered.endswith("add logging"):
-            print("\n[ERROR] vague instruction blocked: add logging")
-            return
     if not request:
-        request = input("Change > ").strip()
-
-    if not request:
-        return
-
-    if is_jarvis_self_request(request):
-        set_current_dir(get_app_root())
-    else:
-        project_root = get_project_state("project_root")
-        if project_root:
-            set_current_dir(project_root)
-    request = build_retry_aware_context_request(request)
-
-    lowered = request.lower()
-    for file_name in JARVIS_APP_FILES:
-        if f"change {file_name}" in lowered or f"edit {file_name}" in lowered:
-            print("\n[FAST PATH] skipping planner")
-            instruction = request.replace("continue", "").strip()
-            instruction = re.sub(r'Previous attempt.*', '', instruction, flags=re.IGNORECASE).strip()
-            instruction = re.sub(r'The previous attempt.*', '', instruction, flags=re.IGNORECASE).strip()
-
-            for prefix in (f"change {file_name} to ", f"edit {file_name} to "):
-                if instruction.lower().startswith(prefix):
-                    instruction = instruction[len(prefix):].strip()
-                    break
-
-            if "top of the file" in instruction.lower():
-                instruction = f"insert at top of file: {instruction}"
-
-            execute_plan([f"edit {file_name} to {instruction}"])
+        request = input("Enter request: ").strip()
+        if not request:
             return
+
+    project_root = get_project_state("project_root")
+    if project_root and os.path.isdir(project_root):
+        set_current_dir(project_root)
 
     cwd = get_current_dir()
 
+    state_rows = get_all_project_state()
+    state_text = "\n".join([f"{k}: {v}" for k, v, _ in state_rows])
+
     print(f"\n[Context Mode] cwd: {cwd}")
 
-    state_text = format_project_state()
     plan_text = ask_llm_context_plan(request, state_text, cwd)
 
-    raw_steps = parse_plan_steps(plan_text)
-    steps = normalize_context_steps(raw_steps, request)
+    print("\n[PLAN]")
+    print(plan_text.strip())
 
-    if not raw_steps:
-        print("\n[ERROR] context planner returned no numbered steps")
-        return
+    steps = parse_plan_steps(plan_text)
 
     if not steps:
-        print("\n[ERROR] context planner produced no executable steps after normalization")
-        print("[RAW PLAN]")
-        print(plan_text if plan_text.strip() else "<empty>")
-        return
-    lowered_request = (request or "").lower()
-    improvement_request = any(word in lowered_request for word in ("improve", "update", "fix", "change", "modify"))
-    has_edit_step = any(is_edit_step(step) for step in steps)
-
-    if is_jarvis_self_request(request) and improvement_request and not has_edit_step:
-        print("\n[ERROR] self-improvement request produced no edit step after normalization")
-        print("[RAW PLAN]")
-        print(plan_text if plan_text.strip() else "<empty>")
-        set_project_state("last_edit_failure_type", "missing_edit_step")
-        set_project_state("last_edit_failure_message", "Self-improvement request normalized to no edit step")
+        print("[ERROR] No valid steps generated.")
         return
 
-    print("\n[PLAN]")
-    for step in steps:
-        print(f"- {step}")
+    confirm = input("\nUse this plan? (y/n): ").strip().lower()
+    if confirm != "y":
+        print("[SKIPPED]")
+        return
 
     execute_plan(steps)
+
 def planner_mode(request=None):
     if not request:
         request = input("Goal > ").strip()
