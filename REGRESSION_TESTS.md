@@ -65,3 +65,38 @@ git checkout -- file_renamer/rename_files.py
 Pass condition:
 - rollback message appears
 - repo returns to clean state
+
+---
+
+## Test 3: Regression suite blocks broken behavior
+
+Purpose:
+Verify the behavioral regression suite fails when application behavior changes incorrectly.
+
+Temporary setup:
+Modify:
+
+file_renamer/rename_files.py
+
+Replace:
+new_file = os.path.join(directory, f"renamed_{filename}")
+
+With:
+new_file = os.path.join(directory, filename)
+
+Run:
+./tests/run_all.sh
+
+Expected:
+1. compile test still passes
+2. rename behavior no longer changes filenames
+3. PASS: file renamer behavior does NOT appear
+4. ALL TESTS PASSED does NOT appear
+5. shell exits early due to failed assertions
+
+Cleanup:
+git checkout -- file_renamer/rename_files.py
+
+Pass condition:
+- regression suite fails
+- restored file returns suite to passing state
