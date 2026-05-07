@@ -255,6 +255,10 @@ def try_step_with_retry(step_text, command, run_mode=None):
 
     save_command(step_text, command, "failed")
 
+    if run_mode == "project_run":
+        print("Project run failed. Skipping shell retry.")
+        return False, command, "failed", run_result
+
     for attempt in range(1, MAX_RETRY_ATTEMPTS + 1):
         print(f"\nRetry attempt {attempt}/{MAX_RETRY_ATTEMPTS}")
         fixed_command = ask_llm_retry(
