@@ -719,10 +719,17 @@ def normalize_context_steps(steps, request_text=""):
             continue
 
         if is_literal_shell_step(s):
-            # 🔴 BLOCK raw project script runs (auto-run handles this)
-            main_script = get_project_state("main_script_name")
-            if main_script and main_script in s:
+            # BLOCK raw project script runs in context mode; auto-run handles project validation.
+            main_script_name = get_project_state("main_script_name")
+            main_script_path = get_project_state("main_script")
+            shell_lower = s.lower()
+
+            if main_script_name and main_script_name.lower() in shell_lower:
                 continue
+
+            if main_script_path and main_script_path.lower() in shell_lower:
+                continue
+
             normalized.append(s)
 
     return normalized
