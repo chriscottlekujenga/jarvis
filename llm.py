@@ -177,11 +177,12 @@ CRITICAL RULES:
 - No explanation
 - No markdown
 - No code fences
-- DO NOT remove existing working logic
-- DO NOT rewrite the script unless the instruction truly requires it
-- Only ADD or MODIFY what is necessary
-- Keep the SAME structure and flow
-- Prefer the smallest possible change
+- Treat the current file as authoritative
+- Preserve all existing code, order, formatting, imports, comments, and blank lines unless the instruction explicitly requires changing them
+- Make the smallest possible textual change
+- Do NOT rewrite, reorganize, simplify, refactor, or reformat unrelated code
+- For import/global/top-level edits, change only the exact relevant line(s)
+- If the requested change is already present, return the file unchanged
 
 Instruction:
 {instruction}
