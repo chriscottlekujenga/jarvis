@@ -1820,7 +1820,8 @@ def execute_plan(steps):
         if not auto_ok:
             print("\n[RETRY] auto-run failed, attempting correction")
 
-            failure_instruction = "fix the error from the last run without breaking existing behavior"
+            last_failure_message = get_project_state("last_edit_failure_message", "unknown failure")
+            failure_instruction = f"fix this error without breaking existing behavior: {last_failure_message}"
 
             retry_request = build_retry_aware_context_request(failure_instruction)
 
