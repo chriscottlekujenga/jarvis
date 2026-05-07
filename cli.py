@@ -1336,6 +1336,15 @@ def run_behavior_validation(file_path, instruction, validation_mode=None):
             if not hasattr(module, "__file__"):
                 return False, "Behavior validation failed: jarvis module import did not succeed"
 
+        test_script = os.path.join(get_app_root(), "tests", "run_all.sh")
+        if os.path.exists(test_script):
+            result = executor_mod.run_command(test_script)
+            if not result.get("success"):
+                return False, (
+                    "Behavior validation failed: regression suite failed. "
+                    + (result.get("stderr") or result.get("stdout") or "")
+                )
+
         return True, f"Behavior validation passed for {basename}"
 
     except Exception as exc:
