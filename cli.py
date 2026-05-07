@@ -724,8 +724,12 @@ def normalize_context_steps(steps, request_text=""):
             main_script_path = get_project_state("main_script")
             shell_lower = s.lower()
 
-            if main_script_name and main_script_name.lower() in shell_lower:
-                continue
+            if main_script_name:
+                main_script_lower = main_script_name.lower()
+                if main_script_lower in shell_lower:
+                    continue
+                if shell_lower.startswith(("python ", "python3 ")) and main_script_lower in shell_lower.split():
+                    continue
 
             if main_script_path and main_script_path.lower() in shell_lower:
                 continue
