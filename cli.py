@@ -1998,6 +1998,7 @@ def context_mode(request=None):
     print(plan_text.strip())
 
     steps = parse_plan_steps(plan_text)
+    steps = normalize_context_steps(steps, request)
 
     if not steps:
         print("[ERROR] No valid steps generated.")
