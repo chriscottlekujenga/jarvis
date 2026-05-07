@@ -1814,7 +1814,7 @@ def run_project_script():
     shutil.rmtree(temp_root, ignore_errors=True)
     return success
 
-def execute_plan(steps):
+def execute_plan(steps, retry_depth=0):
     for step in steps:
         print(f"\n=== {step} ===")
 
@@ -1844,7 +1844,13 @@ def execute_plan(steps):
 
             retry_steps = [f"edit {get_project_state('main_script_name')} to {retry_request}"]
 
-            retry_success = execute_plan(retry_steps)
+            if retry_depth >= 1:
+                set_project_state("last_edit_failure_type", "retry_loop_blocked")
+                set_project_state("last_edit_failure_message", "Correction retry already attempted once; blocking recursive retry.")
+                print("\n[STOPPED] retry loop blocked")
+                return False
+
+            retry_success = execute_plan(retry_steps, retry_depth=retry_depth + 1)
 
             if not retry_success:
                 print("\n[STOPPED] auto-run validation failed after retry")
