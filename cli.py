@@ -1783,6 +1783,23 @@ def run_project_script():
 
     success, final_cmd, _, final_result = try_step_with_retry("run", cmd, run_mode=run_mode)
 
+    if not success:
+        failure_text = ""
+        if isinstance(final_result, dict):
+            failure_text = (
+                final_result.get("stderr")
+                or final_result.get("stdout")
+                or final_result.get("error")
+                or ""
+            )
+        else:
+            failure_text = str(final_result or "")
+
+        set_project_state("last_edit_failure_type", "project_run_failed")
+        set_project_state("last_edit_failure_message", failure_text.strip() or "project run failed")
+        shutil.rmtree(temp_root, ignore_errors=True)
+        return False
+
     if success:
         usefulness_ok, usefulness_msg = run_task_usefulness_validation(
             final_cmd, final_result, get_current_dir(), run_mode=run_mode
