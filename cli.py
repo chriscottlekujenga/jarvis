@@ -730,6 +730,16 @@ def normalize_context_steps(steps, request_text=""):
             if main_script_path and main_script_path.lower() in shell_lower:
                 continue
 
+            if shell_lower.startswith(("python ", "python3 ")) and (
+                "--help" in shell_lower
+                or "-h" in shell_lower
+                or "<" in shell_lower
+                or ">" in shell_lower
+                or " path" in shell_lower
+                or "/path" in shell_lower
+            ):
+                continue
+
             normalized.append(s)
 
     return normalized
