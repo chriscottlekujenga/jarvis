@@ -30,6 +30,16 @@ def make_backup(file_path):
     return backup_path
 
 
+def restore_backup(file_path, backup_path):
+    if not backup_path:
+        return False
+    if not os.path.exists(backup_path):
+        return False
+
+    shutil.copy2(backup_path, file_path)
+    return True
+
+
 def show_diff(old_text, new_text, file_path):
     old_lines = old_text.splitlines(keepends=True)
     new_lines = new_text.splitlines(keepends=True)

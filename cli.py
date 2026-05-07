@@ -29,6 +29,7 @@ try_step_with_retry = executor_mod.try_step_with_retry
 read_file_text = files_mod.read_file_text
 write_file_text = files_mod.write_file_text
 make_backup = files_mod.make_backup
+restore_backup = files_mod.restore_backup
 show_diff = files_mod.show_diff
 
 ask_llm = llm_mod.ask_llm
@@ -1842,6 +1843,8 @@ def execute_plan(steps, retry_depth=0):
 
             retry_request = build_retry_aware_context_request(failure_instruction)
 
+            retry_target = resolve_edit_file_path(get_project_state("main_script_name"))
+            retry_backup_path = make_backup(retry_target)
             retry_steps = [f"edit {get_project_state('main_script_name')} to {retry_request}"]
 
             if retry_depth >= 1:
@@ -1853,6 +1856,8 @@ def execute_plan(steps, retry_depth=0):
             retry_success = execute_plan(retry_steps, retry_depth=retry_depth + 1)
 
             if not retry_success:
+                if retry_backup_path and restore_backup(retry_target, retry_backup_path):
+                    print(f"\n[ROLLBACK] restored failed correction from backup: {retry_backup_path}")
                 print("\n[STOPPED] auto-run validation failed after retry")
                 return False
 
