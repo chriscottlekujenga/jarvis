@@ -100,3 +100,27 @@ git checkout -- file_renamer/rename_files.py
 Pass condition:
 - regression suite fails
 - restored file returns suite to passing state
+
+---
+
+## Test 4: Regression runner detects dirty working tree
+
+Purpose:
+Verify regression execution fails if tests leave repository files modified.
+
+Implementation:
+tests/run_all.sh checks:
+
+git status --short
+
+Expected:
+1. regression suite passes normally on clean repo
+2. if a test modifies tracked files and does not restore them:
+   - runner prints:
+     FAILED: regression tests left working tree dirty
+   - git status output is shown
+   - runner exits nonzero
+
+Pass condition:
+- clean repository passes
+- dirty repository fails visibly
