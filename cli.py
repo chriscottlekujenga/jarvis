@@ -526,18 +526,55 @@ def list_known_python_files():
     return results
 
 
+def build_code_map_for_files(files):
+    lines = []
+
+    for path in files:
+        try:
+            content = read_file_text(path)
+        except Exception:
+            continue
+
+        rel_path = path
+        project_root = get_project_state("project_root")
+        if project_root and path.startswith(project_root):
+            rel_path = os.path.relpath(path, project_root)
+
+        functions = re.findall(r"(?m)^def\\s+([A-Za-z_][A-Za-z0-9_]*)\\s*\\(", content)
+        classes = re.findall(r"(?m)^class\\s+([A-Za-z_][A-Za-z0-9_]*)\\s*[(:]", content)
+
+        imports = []
+        for line in content.splitlines():
+            stripped = line.strip()
+            if stripped.startswith("import ") or stripped.startswith("from "):
+                imports.append(stripped)
+
+        lines.append(f"- {rel_path}")
+        if imports:
+            lines.append(f"  imports: {', '.join(imports[:8])}")
+        if classes:
+            lines.append(f"  classes: {', '.join(classes[:12])}")
+        if functions:
+            lines.append(f"  functions: {', '.join(functions[:20])}")
+
+    return lines
+
+
 def format_project_state():
     rows = get_all_project_state()
     lines = [f"{k}: {v}" for k, v, _ in rows]
-
     files = list_project_python_files()
     if files:
         lines.append("project_files:")
         for path in files:
             lines.append(f"- {path}")
 
+        code_map = build_code_map_for_files(files)
+        if code_map:
+            lines.append("project_code_map:")
+            lines.extend(code_map)
 
-    return "\n".join(lines)
+    return "\\n".join(lines)
 
 def contains_reference(text, term):
     if not text or not term:
