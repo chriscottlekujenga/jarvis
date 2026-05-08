@@ -1,7 +1,7 @@
 # Jarvis Known Issues
 
 ## Current Status
-Jarvis is approximately 85–90% toward supervised stability.
+Jarvis is approximately 90–93% toward supervised stability.
 
 Core closed-loop behavior is working:
 - context-aware project routing
@@ -11,6 +11,8 @@ Core closed-loop behavior is working:
 - auto-run project validation
 - runtime failure capture
 - bounded correction retry
+- rollback recovery
+- regression protection
 
 ## Known Issues
 
@@ -23,15 +25,7 @@ Needed:
 - anti-loop detection
 - block repeated correction strategies
 
-### 2. Retry has no rollback boundary after failed correction
-If the correction retry fails, Jarvis currently stops but may leave the project file in the failed corrected state.
-
-Needed:
-- backup before retry
-- rollback after failed retry
-- clear success/failure state consistently
-
-### 3. Failure classification is still shallow
+### 2. Failure classification is still shallow
 Failures are stored, but not deeply classified.
 
 Needed categories:
@@ -44,7 +38,7 @@ Needed categories:
 - repeated failed fix
 - verifier false positive
 
-### 4. Runtime validation is still basic
+### 3. Runtime validation is still basic
 A project can run successfully without proving the user’s intended behavior was achieved.
 
 Needed:
@@ -53,16 +47,16 @@ Needed:
 - file-system result validation
 - project-type-specific validators
 
-### 5. Multi-file reasoning is immature
+### 4. Multi-file reasoning is immature
 Jarvis is strongest on single-file scripts and main_script-centered changes.
 
 Needed:
-- code map
 - dependency-aware file targeting
 - multi-file edit planning
 - test selection by changed file
+- file relationship awareness
 
-### 6. Planner can still generate unnecessary run steps
+### 5. Planner can still generate unnecessary run steps
 Context normalization blocks some bad raw project runs, but planner output can still include redundant or weak validation steps.
 
 Needed:
@@ -70,14 +64,16 @@ Needed:
 - deterministic validation step replacement
 - drop redundant py_compile steps when auto-validation covers them
 
-### 7. Import/top-level edits required special routing
-Import edits now route to full-file fallback, but other top-level patterns may still be missed.
+### 6. Top-level edit detection is still incomplete
+Import edits and top-of-file edits now route correctly, but additional top-level patterns may still be missed.
 
 Needed:
-- broaden top-level edit detection
-- handle constants, globals, decorators, entrypoints, CLI args
+- broader global/constant detection
+- decorator-aware edits
+- entrypoint-aware edits
+- CLI/parser-aware edits
 
-### 8. Verifier can ask for bad retry commands
+### 7. Verifier can ask for bad retry commands
 During project auto-run failures, command retry logic may suggest bad commands like placeholders or malformed retries.
 
 Needed:
@@ -85,8 +81,35 @@ Needed:
 - route project failures to edit correction only
 - reject placeholder retry commands
 
+### 8. Non-core behavior validation is shallow
+Jarvis validates runtime success for non-core projects but does not deeply validate behavioral correctness.
+
+Needed:
+- project-aware assertions
+- output expectation models
+- semantic validation layers
+- structured validator plugins
+
+### 9. Semantic edit idempotency is incomplete
+Jarvis can still attempt duplicate edits that are semantically already satisfied.
+
+Needed:
+- semantic no-op detection
+- edit intent satisfaction checks
+- duplicate pattern recognition
+- deterministic edit guards beyond logging config
+
+### 10. Function-level semantic correctness is still shallow
+Jarvis now blocks malformed function replacements structurally, but not logically incorrect replacements.
+
+Needed:
+- semantic equivalence validation
+- function behavior tests
+- stronger post-edit verification
+- targeted runtime assertions
+
 ## Next Priority
-Build retry memory and anti-loop protection.
+Build stronger non-core behavior validation.
 
 ## Stability Goal
 Jarvis should become predictably correct under constraint:
@@ -102,3 +125,4 @@ Additional stability requirements:
 - deterministic validation
 - safe recovery behavior
 - regression resistance
+

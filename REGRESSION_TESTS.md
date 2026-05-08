@@ -124,3 +124,46 @@ Expected:
 Pass condition:
 - clean repository passes
 - dirty repository fails visibly
+
+---
+
+## Test 5: Context edit routing normalization
+
+Purpose:
+Verify project-context edit normalization targets the active project instead of Jarvis core files.
+
+Implementation:
+tests/test_context_edit_routing.sh
+
+Expected:
+1. Project context is set to file_renamer
+2. LLM-provided edit referencing files.py is normalized
+3. Final target becomes:
+   /home/chris/jarvis/file_renamer/rename_files.py
+4. Edit instruction becomes deterministic top-of-file insertion
+
+Pass condition:
+- normalized step exactly matches expected project target
+
+---
+
+## Test 6: Function edit guard validation
+
+Purpose:
+Verify malformed function edit outputs are rejected before splice.
+
+Implementation:
+tests/test_function_edit_guards.sh
+
+Expected rejection cases:
+1. Multiple returned functions
+2. Wrong returned function name
+3. Top-level imports/content in function edit output
+
+Expected acceptance case:
+1. Single correctly named function definition only
+
+Pass condition:
+- malformed outputs reject correctly
+- valid output passes
+

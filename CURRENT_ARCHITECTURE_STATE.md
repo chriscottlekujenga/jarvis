@@ -2,7 +2,7 @@
 Updated: 2026-05-07
 
 ## Current Stability Estimate
-Jarvis is approximately 88–92% toward supervised stability.
+Jarvis is approximately 90–93% toward supervised stability.
 
 Jarvis has moved from prototype agent into a bounded autonomous correction system with regression protection.
 
@@ -14,7 +14,19 @@ Plan → Edit → Compile → Execute → Validate → Correct → Revalidate �
 ### Context Routing
 - Context mode switches into project_root before planning.
 - Active project edits now target the correct file.
+- Explicit project edits no longer drift into Jarvis core files.
 - Verified with file_renamer project.
+- Regression coverage added for context edit routing.
+
+### Context Awareness
+- Context info requests now display project state instead of generating edit plans.
+- Lightweight project code map added.
+- Project state includes:
+  - project_files
+  - project_code_map
+  - imports
+  - functions
+  - classes
 
 ### Safe Editing
 - Diff size limits
@@ -23,7 +35,15 @@ Plan → Edit → Compile → Execute → Validate → Correct → Revalidate �
 - Weak edit rejection
 - Python compile validation
 - Top-level/import routing to full-file fallback
+- Deterministic top-of-file insertion handling
 - Surgical full-file edit prompt
+
+### Function Edit Safety
+- Wrong-function replacement rejection
+- Multiple returned function rejection
+- Top-level content rejection during function edits
+- Splice failure detection
+- Regression coverage for malformed function edit output
 
 ### Runtime Validation
 - Project auto-run after edit plans
@@ -38,9 +58,16 @@ Plan → Edit → Compile → Execute → Validate → Correct → Revalidate �
 - Recursive correction retry is blocked
 - Failed correction is restored from backup
 
+### Deterministic Edit Safety
+- Duplicate logging.basicConfig edits are blocked
+- Top-of-file insertion now correctly places edits after imports
+- Generic "files" keyword no longer routes edits into Jarvis core accidentally
+
 ### Regression Infrastructure
 - tests/test_compile_core.sh
 - tests/test_file_renamer_behavior.sh
+- tests/test_context_edit_routing.sh
+- tests/test_function_edit_guards.sh
 - tests/run_all.sh
 - Named test reporting
 - Explicit behavior failure messages
@@ -80,19 +107,33 @@ Observed:
 - ALL TESTS PASSED did not print
 - restored file returned suite to passing state
 
+### Context Routing Proof
+Observed:
+- Project-context edits now correctly target project files
+- Generic references to "files" no longer route into files.py
+- Context info requests return project structure without generating edit plans
+
+### Function Guard Proof
+Observed:
+- Multiple returned functions rejected
+- Wrong function names rejected
+- Top-level imports/content rejected during function replacement
+- Malformed function edits blocked before splice
+
 ## Current Known Weaknesses
 
 1. Multi-file reasoning remains immature.
-2. Regression suite is still small.
-3. Failure classification is shallow.
-4. No code map yet.
-5. Project-specific validators are manual.
-6. No typed plan/action schemas yet.
-7. No formal confidence/risk scoring yet.
+2. Regression suite is still relatively small.
+3. Failure classification is still shallow.
+4. Project-specific validators are manual.
+5. No typed plan/action schemas yet.
+6. No formal confidence/risk scoring yet.
+7. Non-core project behavior validation is still shallow.
+8. Semantic correctness validation is still limited.
 
 ## Immediate Next Feature
-Add a lightweight code map so Jarvis can understand project files before planning multi-file changes.
+Add stronger behavior validation for non-core project files.
 
 Goal:
-Move from main_script-centered intelligence toward multi-file awareness.
+Move from “successful execution” toward “validated intended behavior.”
 
