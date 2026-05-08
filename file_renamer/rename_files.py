@@ -5,6 +5,7 @@ import logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 def rename_files_in_directory(directory):
+    logging.basicConfig(level=logging.INFO)
     for filename in os.listdir(directory):
         old_file = os.path.join(directory, filename)
         if os.path.isdir(old_file): 
