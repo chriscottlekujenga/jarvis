@@ -1975,6 +1975,20 @@ def build_retry_aware_context_request(request):
     return request
 
 
+def is_context_info_request(request):
+    lowered = (request or "").lower()
+    info_terms = [
+        "show project structure",
+        "project structure",
+        "show structure",
+        "show code map",
+        "code map",
+        "what files",
+        "list files",
+    ]
+    return any(term in lowered for term in info_terms)
+
+
 def context_mode(request=None):
     if not request:
         request = input("Enter request: ").strip()
@@ -1987,18 +2001,15 @@ def context_mode(request=None):
 
     cwd = get_current_dir()
 
-    state_rows = get_all_project_state()
-    state_text = "\n".join([f"{k}: {v}" for k, v, _ in state_rows])
-
     print(f"\n[Context Mode] cwd: {cwd}")
 
+    if is_context_info_request(request):
+        print("\n[PROJECT STATE]")
+        print(format_project_state())
+        return
+
+    state_text = format_project_state()
     plan_text = ask_llm_context_plan(request, state_text, cwd)
-
-    steps = parse_plan_steps(plan_text)
-    steps = normalize_context_steps(steps, request)
-
-    steps = parse_plan_steps(plan_text)
-    steps = normalize_context_steps(steps, request)
 
     steps = parse_plan_steps(plan_text)
     steps = normalize_context_steps(steps, request)
