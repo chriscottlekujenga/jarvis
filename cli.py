@@ -1747,6 +1747,23 @@ def run_edit(step):
     return True
 
 
+def validate_rename_files_project(command, result):
+    parts = (command or "").strip().split()
+    sample_dir = parts[-1].strip("\'\"") if parts else ""
+
+    renamed = any(
+        f.startswith("renamed_")
+        for f in os.listdir(sample_dir)
+    ) if os.path.isdir(sample_dir) else False
+
+    return renamed, f"Task usefulness: rename_files renamed_files_exist={renamed} path={sample_dir}"
+
+
+PROJECT_RUN_VALIDATORS = {
+    "rename_files.py": validate_rename_files_project,
+}
+
+
 def validate_project_run_result(command, result):
     ok = bool((result or {}).get("success"))
     if not ok:
@@ -1754,15 +1771,10 @@ def validate_project_run_result(command, result):
 
     script = get_project_state("main_script") or ""
     script_name = os.path.basename(script)
-    parts = (command or "").strip().split()
-    sample_dir = parts[-1].strip("\'\"") if parts else ""
 
-    if script_name == "rename_files.py":
-        renamed = any(
-            f.startswith("renamed_")
-            for f in os.listdir(sample_dir)
-        ) if os.path.isdir(sample_dir) else False
-        return renamed, f"Task usefulness: rename_files renamed_files_exist={renamed} path={sample_dir}"
+    validator = PROJECT_RUN_VALIDATORS.get(script_name)
+    if validator:
+        return validator(command, result)
 
     return True, "Task usefulness: project run success=True"
 
