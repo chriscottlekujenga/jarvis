@@ -1602,6 +1602,10 @@ def run_edit(step):
         if old.endswith("\n"):
             new += "\n"
     elif force_full_file_edit:
+        if "logging.basicconfig" in lowered_instruction and "logging.basicConfig(" in old:
+            print("[NO-OP] logging.basicConfig already present")
+            return True
+
         print("[FUNCTION] none inferred, using full-file fallback")
 
         new = ask_llm_edit(file_path, old, instruction)
