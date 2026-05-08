@@ -27,6 +27,7 @@ echo "========================================"
 
 run_test "core compile" "./tests/test_compile_core.sh"
 run_test "file renamer behavior" "./tests/test_file_renamer_behavior.sh"
+run_test "context edit routing" "./tests/test_context_edit_routing.sh"
 
 if [[ -n "$(git status --short)" ]]; then
   echo
