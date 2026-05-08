@@ -540,8 +540,8 @@ def build_code_map_for_files(files):
         if project_root and path.startswith(project_root):
             rel_path = os.path.relpath(path, project_root)
 
-        functions = re.findall(r"(?m)^def\\s+([A-Za-z_][A-Za-z0-9_]*)\\s*\\(", content)
-        classes = re.findall(r"(?m)^class\\s+([A-Za-z_][A-Za-z0-9_]*)\\s*[(:]", content)
+        functions = re.findall(r"(?m)^def\s+([A-Za-z_][A-Za-z0-9_]*)\s*\(", content)
+        classes = re.findall(r"(?m)^class\s+([A-Za-z_][A-Za-z0-9_]*)\s*[(:]", content)
 
         imports = []
         for line in content.splitlines():
