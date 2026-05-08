@@ -1994,11 +1994,18 @@ def context_mode(request=None):
 
     plan_text = ask_llm_context_plan(request, state_text, cwd)
 
-    print("\n[PLAN]")
-    print(plan_text.strip())
+    steps = parse_plan_steps(plan_text)
+    steps = normalize_context_steps(steps, request)
 
     steps = parse_plan_steps(plan_text)
     steps = normalize_context_steps(steps, request)
+
+    steps = parse_plan_steps(plan_text)
+    steps = normalize_context_steps(steps, request)
+
+    print("\n[PLAN]")
+    for i, step in enumerate(steps, 1):
+        print(f"{i}. {step}")
 
     if not steps:
         print("[ERROR] No valid steps generated.")
