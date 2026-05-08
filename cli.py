@@ -1580,12 +1580,27 @@ def run_edit(step):
         pass
     elif "insert at top of file:" in instruction.lower():
         print("[DETERMINISTIC EDIT] top-of-file insertion")
+
         line = instruction.split("insert at top of file:", 1)[1].strip()
+
         if "comment" in line:
             new_line = "# " + line.replace("add a harmless comment", "").strip().capitalize()
         else:
             new_line = line
-        new = new_line + "\n" + old
+
+        lines = old.splitlines()
+
+        insert_index = 0
+        for i, existing in enumerate(lines):
+            stripped = existing.strip()
+            if stripped.startswith("import ") or stripped.startswith("from "):
+                insert_index = i + 1
+
+        lines.insert(insert_index, new_line)
+
+        new = "\n".join(lines)
+        if old.endswith("\n"):
+            new += "\n"
     elif force_full_file_edit:
         print("[FUNCTION] none inferred, using full-file fallback")
 
