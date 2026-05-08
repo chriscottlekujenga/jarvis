@@ -1,22 +1,42 @@
 # Jarvis Known Issues
+Updated: 2026-05-08
 
 ## Current Status
-Jarvis is approximately 90–93% toward supervised stability.
+Jarvis is approximately 91–94% toward supervised stability.
 
 Core closed-loop behavior is working:
 - context-aware project routing
 - correct project-root execution
 - safe edit flow
+- function-level editing
 - compile validation
 - auto-run project validation
 - runtime failure capture
 - bounded correction retry
 - rollback recovery
+- project validator registry
 - regression protection
+
+## Strategic Clarification
+Jarvis has not deviated from the roadmap.
+
+The live build clarified that planner determinism must mature before broader autonomy, multi-file orchestration, or autonomous self-improvement.
 
 ## Known Issues
 
-### 1. Retry loop can repeat weak fixes
+### 1. Planner determinism is still immature
+Planner output can still be vague, redundant, malformed, or weak.
+
+Needed:
+- invalid plan rejection
+- duplicate-step rejection
+- noop-plan rejection
+- exact edit/run structure enforcement
+- deterministic validation-step generation
+- stronger target inference
+- regression tests for plan normalization
+
+### 2. Retry loop can repeat weak fixes
 Jarvis can attempt a correction that technically changes the file but does not fix the failing runtime behavior.
 
 Needed:
@@ -24,74 +44,67 @@ Needed:
 - failed-fix tracking
 - anti-loop detection
 - block repeated correction strategies
+- retry policy objects
 
-### 2. Failure classification is still shallow
-Failures are stored, but not deeply classified.
+### 3. Failure classification is only partially centralized
+Some core retry failure constants exist, but failure taxonomy is not yet complete.
 
-Needed categories:
-- compile failure
-- runtime exception
-- usefulness failure
-- empty diff
-- weak edit
-- wrong target
-- repeated failed fix
-- verifier false positive
+Needed:
+- complete failure type constants
+- failure categories
+- retry strategy per category
+- structured failure records
+- failure analytics
 
-### 3. Runtime validation is still basic
-A project can run successfully without proving the user’s intended behavior was achieved.
+### 4. Runtime validation is still shallow
+Jarvis can run a project successfully without fully proving intended behavior.
 
 Needed:
 - behavior-specific checks
 - expected output validation
 - file-system result validation
 - project-type-specific validators
+- stronger semantic validators
 
-### 4. Multi-file reasoning is immature
+### 5. Multi-file reasoning is immature
 Jarvis is strongest on single-file scripts and main_script-centered changes.
 
 Needed:
 - dependency-aware file targeting
 - multi-file edit planning
-- test selection by changed file
+- changed-file test selection
 - file relationship awareness
+- import graph/code map improvements
 
-### 5. Planner can still generate unnecessary run steps
-Context normalization blocks some bad raw project runs, but planner output can still include redundant or weak validation steps.
-
-Needed:
-- stricter context-step normalization
-- deterministic validation step replacement
-- drop redundant py_compile steps when auto-validation covers them
-
-### 6. Top-level edit detection is still incomplete
-Import edits and top-of-file edits now route correctly, but additional top-level patterns may still be missed.
+### 6. Top-level edit detection is incomplete
+Import edits and top-of-file edits route correctly, but additional top-level patterns may still be missed.
 
 Needed:
-- broader global/constant detection
+- global/constant detection
 - decorator-aware edits
 - entrypoint-aware edits
 - CLI/parser-aware edits
 
-### 7. Verifier can ask for bad retry commands
-During project auto-run failures, command retry logic may suggest bad commands like placeholders or malformed retries.
+### 7. Verifier can still produce weak command retry behavior
+Project-run shell retry is bypassed, but verifier logic still needs more systematic policy.
 
 Needed:
-- disable shell-command retry during project auto-run
-- route project failures to edit correction only
-- reject placeholder retry commands
+- stronger command retry policy
+- placeholder retry rejection
+- project failure → edit correction only
+- command verification taxonomy
 
 ### 8. Non-core behavior validation is shallow
-Jarvis validates runtime success for non-core projects but does not deeply validate behavioral correctness.
+Project-aware validation exists through PROJECT_RUN_VALIDATORS, but coverage is currently limited.
 
 Needed:
-- project-aware assertions
+- validator plugins per project type
+- more project validators
 - output expectation models
-- semantic validation layers
-- structured validator plugins
+- structured validator interfaces
 
 ### 9. Semantic edit idempotency is incomplete
-Jarvis can still attempt duplicate edits that are semantically already satisfied.
+Jarvis can still attempt edits that are semantically already satisfied.
 
 Needed:
 - semantic no-op detection
@@ -99,17 +112,39 @@ Needed:
 - duplicate pattern recognition
 - deterministic edit guards beyond logging config
 
-### 10. Function-level semantic correctness is still shallow
-Jarvis now blocks malformed function replacements structurally, but not logically incorrect replacements.
+### 10. Function-level semantic correctness is shallow
+Jarvis blocks malformed function replacements structurally, but not logically incorrect replacements.
 
 Needed:
 - semantic equivalence validation
 - function behavior tests
-- stronger post-edit verification
 - targeted runtime assertions
+- post-edit behavior checks by function
+
+### 11. No typed plan/action schemas yet
+Plans and actions are still largely string-based.
+
+Needed:
+- typed PlanStep
+- typed EditIntent
+- typed ValidationResult
+- typed FailureRecord
+- typed ProjectContext
+- strict LLM output validation before execution
+
+### 12. Structured event logging is missing
+Console output is useful for humans but not enough for long-term self-improvement.
+
+Needed:
+- SQLite event records
+- step start/end records
+- file target decision records
+- validation result records
+- rollback records
+- retry decision records
 
 ## Next Priority
-Build stronger non-core behavior validation.
+Planner determinism hardening.
 
 ## Stability Goal
 Jarvis should become predictably correct under constraint:
@@ -119,10 +154,4 @@ Jarvis should become predictably correct under constraint:
 - bounded retry
 - rollback on failed correction
 - no silent success
-
-Additional stability requirements:
-- bounded retry ceilings
-- deterministic validation
-- safe recovery behavior
-- regression resistance
 

@@ -1,27 +1,45 @@
 # Jarvis Current Architecture State
-Updated: 2026-05-07
+Updated: 2026-05-08
 
 ## Current Stability Estimate
-Jarvis is approximately 90–93% toward supervised stability.
+Jarvis is approximately 91–94% toward supervised stability.
 
-Jarvis has moved from prototype agent into a bounded autonomous correction system with regression protection.
+Jarvis has moved from prototype agent into a constrained autonomous coding runtime with regression protection, rollback safety, context-aware routing, and project-aware validation.
+
+## Core Principle
+Predictably correct behavior under constraint.
 
 ## Current Core Loop
 Plan → Edit → Compile → Execute → Validate → Correct → Revalidate → Rollback if needed
+
+## Strategic Clarification
+Jarvis has not materially deviated from the roadmap.
+
+Implementation has clarified the correct ordering:
+
+1. Execution safety
+2. Validation correctness
+3. Retry correctness
+4. Regression enforcement
+5. Planner determinism
+6. Multi-file orchestration
+7. Autonomous branching/self-improvement
+
+Planner determinism must mature before broader autonomy.
 
 ## Completed Stability Milestones
 
 ### Context Routing
 - Context mode switches into project_root before planning.
-- Active project edits now target the correct file.
+- Active project edits target the correct project file.
 - Explicit project edits no longer drift into Jarvis core files.
-- Verified with file_renamer project.
-- Regression coverage added for context edit routing.
+- Generic references to "files" no longer route edits into files.py accidentally.
+- Context info requests display project state instead of generating edit plans.
+- Regression coverage exists for context edit routing.
 
 ### Context Awareness
-- Context info requests now display project state instead of generating edit plans.
 - Lightweight project code map added.
-- Project state includes:
+- Project state displays:
   - project_files
   - project_code_map
   - imports
@@ -34,45 +52,59 @@ Plan → Edit → Compile → Execute → Validate → Correct → Revalidate �
 - Empty diff rejection
 - Weak edit rejection
 - Python compile validation
-- Top-level/import routing to full-file fallback
-- Deterministic top-of-file insertion handling
-- Surgical full-file edit prompt
+- Undefined constant detection
+- Top-level/import routing
+- Deterministic top-of-file insertion after imports
+- Duplicate logging.basicConfig guard
+- Surgical full-file edit fallback
 
 ### Function Edit Safety
-- Wrong-function replacement rejection
-- Multiple returned function rejection
-- Top-level content rejection during function edits
-- Splice failure detection
-- Regression coverage for malformed function edit output
+- Function-level editing exists.
+- Wrong-function replacement rejection.
+- Multiple returned function rejection.
+- Top-level content rejection during function edits.
+- Splice failure detection.
+- Regression coverage for malformed function edit output.
 
 ### Runtime Validation
-- Project auto-run after edit plans
-- Runtime stderr/stdout capture
-- Traceback stored in project state
-- Usefulness validation for project runs
+- Project auto-run after edit plans.
+- Runtime stderr/stdout capture.
+- Traceback stored in project state.
+- Project-run semantic validation exists.
+- Project validator registry exists.
+- rename_files.py validator checks actual renamed output files.
 
 ### Autonomous Correction
-- Failed auto-run triggers correction retry
-- Retry uses actual runtime failure message
-- Project-run shell retry is bypassed
-- Recursive correction retry is blocked
-- Failed correction is restored from backup
+- Failed auto-run triggers correction retry.
+- Retry uses actual runtime failure message.
+- Project-run shell retry is bypassed.
+- Recursive correction retry is blocked.
+- Failed correction is restored from backup.
+- Retry-aware instruction strengthening exists.
 
-### Deterministic Edit Safety
-- Duplicate logging.basicConfig edits are blocked
-- Top-of-file insertion now correctly places edits after imports
-- Generic "files" keyword no longer routes edits into Jarvis core accidentally
+### Rollback Safety
+- Validation rollback helper extracted.
+- Rollback covered by regression tests.
+- Failed validation restores backup, in-memory old text, or removes newly created files.
+
+### Failure Handling
+- Failure class output is printed.
+- Retry failure constants exist for core retry categories.
+- Failure state is persisted in project_state.
+- Retry instruction strengthening uses stored failure type/message.
 
 ### Regression Infrastructure
 - tests/test_compile_core.sh
 - tests/test_file_renamer_behavior.sh
 - tests/test_context_edit_routing.sh
 - tests/test_function_edit_guards.sh
+- tests/test_project_validator_registry.sh
+- tests/test_retry_instruction_strengthening.sh
+- tests/test_validation_rollback.sh
 - tests/run_all.sh
 - Named test reporting
-- Explicit behavior failure messages
 - Dirty working tree protection
-- Regression suite runs during core behavior validation
+- Regression suite runs during validation
 
 ## Verified Proofs
 
@@ -89,29 +121,22 @@ Observed:
 - second auto-run passed
 
 ### Rollback Proof
-Temporary weakened retry instruction:
-failure_instruction = "make a tiny unrelated comment change only"
-
 Observed:
-- correction failed to fix runtime error
-- recursive retry blocked
-- failed correction restored from backup
+- failed correction rollback restores prior working file
+- recursive correction retry is blocked
+- validation rollback helper restores backup/in-memory state/new-file state
 
 ### Regression Blocking Proof
-Temporary broken rename behavior:
-new_file = os.path.join(directory, filename)
-
 Observed:
-- compile test passed
-- behavior test failed
-- ALL TESTS PASSED did not print
-- restored file returned suite to passing state
+- broken rename behavior fails behavior regression
+- dirty working tree after tests fails regression runner
+- restored file returns suite to passing state
 
 ### Context Routing Proof
 Observed:
-- Project-context edits now correctly target project files
-- Generic references to "files" no longer route into files.py
-- Context info requests return project structure without generating edit plans
+- Project-context edits target /home/chris/jarvis/file_renamer/rename_files.py
+- LLM-generated references to /home/chris/jarvis/files.py are normalized away when the user did not request Jarvis core edits
+- Context info requests return project structure without edit planning
 
 ### Function Guard Proof
 Observed:
@@ -120,20 +145,31 @@ Observed:
 - Top-level imports/content rejected during function replacement
 - Malformed function edits blocked before splice
 
+### Validator Registry Proof
+Observed:
+- PROJECT_RUN_VALIDATORS contains rename_files.py
+- rename_files.py project validator is callable
+- project_run mode dispatches to active script validator
+
 ## Current Known Weaknesses
 
-1. Multi-file reasoning remains immature.
-2. Regression suite is still relatively small.
-3. Failure classification is still shallow.
-4. Project-specific validators are manual.
+1. Planner determinism is now the highest-leverage bottleneck.
+2. Multi-file reasoning remains immature.
+3. Regression suite is growing but still small.
+4. Failure taxonomy is only partially centralized.
 5. No typed plan/action schemas yet.
 6. No formal confidence/risk scoring yet.
 7. Non-core project behavior validation is still shallow.
 8. Semantic correctness validation is still limited.
+9. Retry policies are still partly ad hoc.
+10. Structured event logging is not yet implemented.
 
 ## Immediate Next Feature
-Add stronger behavior validation for non-core project files.
+Planner determinism hardening.
 
 Goal:
-Move from “successful execution” toward “validated intended behavior.”
+Prevent vague, duplicate, malformed, noop, or weak plans before execution.
+
+## Next Major Expansion After Planner Hardening
+Multi-file orchestration.
 

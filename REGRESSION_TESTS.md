@@ -1,4 +1,27 @@
 # Jarvis Regression Tests
+Updated: 2026-05-08
+
+## Active Regression Suite
+
+Run all tests:
+./tests/run_all.sh
+
+Current automated tests:
+- tests/test_compile_core.sh
+- tests/test_file_renamer_behavior.sh
+- tests/test_context_edit_routing.sh
+- tests/test_function_edit_guards.sh
+- tests/test_project_validator_registry.sh
+- tests/test_retry_instruction_strengthening.sh
+- tests/test_validation_rollback.sh
+
+The runner fails if:
+- compile fails
+- behavior test fails
+- any regression test fails
+- tests leave the working tree dirty
+
+---
 
 ## Test 1: Context routing + autonomous correction
 
@@ -10,7 +33,7 @@ Setup:
 - main_script: /home/chris/jarvis/file_renamer/rename_files.py
 - main_script_name: rename_files.py
 
-Command inside Jarvis:
+Manual command inside Jarvis:
 continue remove the import os line from rename_files.py
 
 Expected:
@@ -45,7 +68,7 @@ failure_instruction = f"fix this error without breaking existing behavior: {last
 With:
 failure_instruction = "make a tiny unrelated comment change only"
 
-Command inside Jarvis:
+Manual command inside Jarvis:
 continue remove the import os line from rename_files.py
 
 Expected:
@@ -75,7 +98,6 @@ Verify the behavioral regression suite fails when application behavior changes i
 
 Temporary setup:
 Modify:
-
 file_renamer/rename_files.py
 
 Replace:
@@ -110,7 +132,6 @@ Verify regression execution fails if tests leave repository files modified.
 
 Implementation:
 tests/run_all.sh checks:
-
 git status --short
 
 Expected:
@@ -129,31 +150,31 @@ Pass condition:
 
 ## Test 5: Context edit routing normalization
 
-Purpose:
-Verify project-context edit normalization targets the active project instead of Jarvis core files.
-
 Implementation:
 tests/test_context_edit_routing.sh
 
+Purpose:
+Verify project-context edit normalization targets the active project instead of Jarvis core files.
+
 Expected:
-1. Project context is set to file_renamer
-2. LLM-provided edit referencing files.py is normalized
+1. Project context is set to file_renamer.
+2. LLM-provided edit referencing files.py is normalized.
 3. Final target becomes:
    /home/chris/jarvis/file_renamer/rename_files.py
-4. Edit instruction becomes deterministic top-of-file insertion
+4. Edit instruction becomes deterministic top-of-file insertion.
 
 Pass condition:
-- normalized step exactly matches expected project target
+- normalized step exactly matches expected project target.
 
 ---
 
 ## Test 6: Function edit guard validation
 
-Purpose:
-Verify malformed function edit outputs are rejected before splice.
-
 Implementation:
 tests/test_function_edit_guards.sh
+
+Purpose:
+Verify malformed function edit outputs are rejected before splice.
 
 Expected rejection cases:
 1. Multiple returned functions
@@ -166,4 +187,84 @@ Expected acceptance case:
 Pass condition:
 - malformed outputs reject correctly
 - valid output passes
+
+---
+
+## Test 7: Project validator registry
+
+Implementation:
+tests/test_project_validator_registry.sh
+
+Purpose:
+Verify project-run validators are registered through PROJECT_RUN_VALIDATORS.
+
+Expected:
+1. rename_files.py exists in PROJECT_RUN_VALIDATORS.
+2. Its validator is callable.
+
+Pass condition:
+- registry contains the expected validator.
+
+---
+
+## Test 8: Retry instruction strengthening
+
+Implementation:
+tests/test_retry_instruction_strengthening.sh
+
+Purpose:
+Verify failed edit classifications strengthen the next edit instruction.
+
+Expected:
+1. weak_self_edit adds behavior-changing instruction.
+2. empty_diff adds no-change retry guidance.
+3. diff_too_small adds meaningful-change guidance.
+4. behavior_validation_failed preserves the failure message.
+
+Pass condition:
+- strengthened instruction includes expected retry guidance.
+
+---
+
+## Test 9: Validation rollback
+
+Implementation:
+tests/test_validation_rollback.sh
+
+Purpose:
+Verify failed validation rollback restores safe file state.
+
+Expected:
+1. Existing file restores from backup.
+2. Existing file restores from in-memory old text when no backup exists.
+3. Newly created failed file is removed.
+
+Pass condition:
+- rollback helper produces expected file state and message.
+
+---
+
+## Next Regression Targets
+
+### Planner Determinism
+Needed tests:
+- reject empty plans
+- reject duplicate steps
+- reject vague edit steps
+- reject placeholder commands
+- reject noop plans
+- enforce normalized context edit targets
+- enforce deterministic validation replacement
+
+### Failure Taxonomy
+Needed tests:
+- all record_edit_failure calls use known failure types
+- retry policies map to known failure categories
+- failure messages persist and clear correctly
+
+### Multi-file Readiness
+Needed tests:
+- code map includes multiple project files
+- file targeting chooses dependency file when explicitly requested
+- main_script remains default only when no better target exists
 
