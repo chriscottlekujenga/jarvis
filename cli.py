@@ -1645,13 +1645,32 @@ def run_edit(step):
             file_context=function_context,
         ).replace("", "").strip()
 
-        returned_name_match = re.search(r'(?m)^def ([A-Za-z_][A-Za-z0-9_]*)\s*\(', new_function_block)
-        if not returned_name_match:
+        returned_defs = re.findall(r'(?m)^def ([A-Za-z_][A-Za-z0-9_]*)\s*\(', new_function_block)
+        if not returned_defs:
             return record_edit_failure("invalid_function_edit_definition", "Rejected: function edit did not return a function definition")
 
-        returned_name = returned_name_match.group(1)
+        if len(returned_defs) != 1:
+            return record_edit_failure("invalid_function_edit_definition", f"Rejected: function edit returned multiple functions: {returned_defs}")
+
+        returned_name = returned_defs[0]
         if returned_name != target_function:
             return record_edit_failure("wrong_function_edit_name", f"Rejected: function edit returned {returned_name} instead of {target_function}")
+
+        top_level_lines = []
+        for line in new_function_block.splitlines():
+            stripped = line.strip()
+            if not stripped:
+                continue
+            if line.startswith((" ", "\t")):
+                continue
+            if stripped.startswith("#"):
+                continue
+            if stripped.startswith(f"def {target_function}("):
+                continue
+            top_level_lines.append(stripped)
+
+        if top_level_lines:
+            return record_edit_failure("invalid_function_edit_definition", f"Rejected: function edit returned top-level content: {top_level_lines[:3]}")
 
         new = splice_function_block(old, target_function, new_function_block)
         if new is None:
