@@ -1734,23 +1734,29 @@ def run_edit(step):
     behavior_ok, behavior_msg = run_behavior_validation(file_path, instruction, validation_mode=validation_mode)
     print(behavior_msg)
     if not behavior_ok:
-        if backup_path and os.path.exists(backup_path):
-            shutil.copy2(backup_path, file_path)
-            print(f"[ROLLBACK] restored from backup: {backup_path}")
-        elif old:
-            write_file_text(file_path, old)
-            print("[ROLLBACK] restored previous in-memory file contents")
-        else:
-            try:
-                os.remove(file_path)
-                print("[ROLLBACK] removed newly created file after failed validation")
-            except FileNotFoundError:
-                pass
-        return record_edit_failure("behavior_validation_failed", "[STOPPED] behavior validation failed after edit")
+        print(rollback_file_after_failed_validation(file_path, old, backup_path))
+        return record_edit_failure(FAILURE_BEHAVIOR_VALIDATION_FAILED, "[STOPPED] behavior validation failed after edit")
     set_project_state("last_edit_failure_type", "")
     set_project_state("last_edit_failure_message", "")
     print("[EDIT APPLIED]")
     return True
+
+
+
+def rollback_file_after_failed_validation(file_path, old_text, backup_path):
+    if backup_path and os.path.exists(backup_path):
+        shutil.copy2(backup_path, file_path)
+        return f"[ROLLBACK] restored from backup: {backup_path}"
+
+    if old_text:
+        write_file_text(file_path, old_text)
+        return "[ROLLBACK] restored previous in-memory file contents"
+
+    try:
+        os.remove(file_path)
+        return "[ROLLBACK] removed newly created file after failed validation"
+    except FileNotFoundError:
+        return "[ROLLBACK] new file already absent after failed validation"
 
 
 def validate_rename_files_project(command, result):
