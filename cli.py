@@ -707,13 +707,14 @@ def normalize_context_steps(steps, request_text=""):
                 normalized.append(f"edit {target_path} to {instruction}")
                 continue
 
-            # 🔴 FORCE jarvis file if inferred
+            # 🔴 FORCE Jarvis file only when the USER requested a Jarvis/self edit.
             if jarvis_self_request and jarvis_target_file:
                 target_path = resolve_edit_file_path(jarvis_target_file)
                 normalized.append(f"edit {target_path} to {instruction}")
                 continue
 
-            # fallback to main script
+            # 🔴 In project context, ignore LLM-chosen Jarvis core targets.
+            # If the user did not explicitly request Jarvis itself, project edits go to main_script.
             target_path = resolve_edit_file_path(main_script)
             normalized.append(f"edit {target_path} to {instruction}")
             continue
