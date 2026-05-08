@@ -59,6 +59,12 @@ JARVIS_APP_FILES = [
     "verifier.py",
 ]
 
+FAILURE_WEAK_SELF_EDIT = "weak_self_edit"
+FAILURE_EMPTY_DIFF = "empty_diff"
+FAILURE_DIFF_TOO_SMALL = "diff_too_small"
+FAILURE_PYTHON_COMPILE_FAILED = "python_compile_failed"
+FAILURE_BEHAVIOR_VALIDATION_FAILED = "behavior_validation_failed"
+
 JARVIS_SELF_KEYWORDS = [
     "jarvis",
     "jarvis.py",
@@ -1481,14 +1487,14 @@ def strengthen_edit_instruction(instruction):
     if not instruction or not failure_type:
         return instruction
 
-    if failure_type == "weak_self_edit":
+    if failure_type == FAILURE_WEAK_SELF_EDIT:
         return (
             f"{instruction}. "
             f"Make a concrete behavior-changing code edit, not a wording-only change. "
             f"Modify logic, condition handling, return values, or explicit output fields named in the request."
         )
 
-    if failure_type == "empty_diff":
+    if failure_type == FAILURE_EMPTY_DIFF:
         return (
             f"{instruction}. "
             f"The previous attempt produced no change. "
@@ -1496,14 +1502,14 @@ def strengthen_edit_instruction(instruction):
             f"Otherwise make an observable code change."
         )
 
-    if failure_type == "diff_too_small":
+    if failure_type == FAILURE_DIFF_TOO_SMALL:
         return (
             f"{instruction}. "
             f"The previous attempt was too small. "
             f"Make a more meaningful but still scoped behavior change."
         )
 
-    if failure_type == "behavior_validation_failed":
+    if failure_type == FAILURE_BEHAVIOR_VALIDATION_FAILED:
         return (
             f"{instruction}. "
             f"The previous attempt failed behavior validation: {failure_message}. "
@@ -2028,31 +2034,31 @@ def build_retry_aware_context_request(request):
     if not request or not failure_type:
         return request
 
-    if failure_type == "weak_self_edit":
+    if failure_type == FAILURE_WEAK_SELF_EDIT:
         return (
             f"{request}. Previous attempt failed as weak_self_edit. "
             f"Generate a concrete behavior-changing edit that modifies logic or outputs, not wording."
         )
 
-    if failure_type == "empty_diff":
+    if failure_type == FAILURE_EMPTY_DIFF:
         return (
             f"{request}. Previous attempt produced empty_diff. "
             f"If already correct, do not edit. Otherwise make a real behavioral change."
         )
 
-    if failure_type == "diff_too_small":
+    if failure_type == FAILURE_DIFF_TOO_SMALL:
         return (
             f"{request}. Previous attempt diff was too small. "
             f"Make a more meaningful change."
         )
 
-    if failure_type == "python_compile_failed":
+    if failure_type == FAILURE_PYTHON_COMPILE_FAILED:
         return (
             f"{request}. Previous attempt failed to compile. "
             f"Return valid Python only."
         )
 
-    if failure_type == "behavior_validation_failed":
+    if failure_type == FAILURE_BEHAVIOR_VALIDATION_FAILED:
         return (
             f"{request}. Previous attempt failed behavior validation: {failure_message}. "
             f"Preserve output contract while fixing logic."
