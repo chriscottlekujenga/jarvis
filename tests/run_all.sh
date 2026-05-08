@@ -31,6 +31,7 @@ run_test "context edit routing" "./tests/test_context_edit_routing.sh"
 run_test "function edit guards" "./tests/test_function_edit_guards.sh"
 run_test "project validator registry" "./tests/test_project_validator_registry.sh"
 run_test "retry instruction strengthening" "./tests/test_retry_instruction_strengthening.sh"
+run_test "validation rollback" "./tests/test_validation_rollback.sh"
 
 if [[ -n "$(git status --short)" ]]; then
   echo
