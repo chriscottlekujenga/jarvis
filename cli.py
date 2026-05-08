@@ -607,6 +607,8 @@ def is_jarvis_self_request(text):
             return True
     for file_name in JARVIS_APP_FILES:
         module_name = file_name[:-3].lower() if file_name.endswith(".py") else file_name.lower()
+        if module_name == "files":
+            continue
         if module_name and contains_reference(lowered, module_name):
             return True
     for keyword in JARVIS_SELF_KEYWORDS:
@@ -649,6 +651,8 @@ def infer_jarvis_target_file(text):
             return file_name
     for file_name in JARVIS_APP_FILES:
         module_name = file_name[:-3].lower() if file_name.endswith(".py") else file_name.lower()
+        if module_name == "files":
+            continue
         if module_name and contains_reference(lowered, module_name):
             return file_name
     if contains_reference(lowered, "jarvis"):
@@ -657,7 +661,7 @@ def infer_jarvis_target_file(text):
 
 
 def normalize_context_steps(steps, request_text=""):
-    main_script = get_project_state("main_script_name")
+    main_script = get_project_state("main_script") or get_project_state("main_script_name")
     normalized = []
 
     explicit_target = extract_explicit_python_target(request_text)
@@ -682,8 +686,28 @@ def normalize_context_steps(steps, request_text=""):
             parts = s.split(" to ", 1)
             instruction = parts[1].strip() if len(parts) == 2 else s[5:].strip()
 
-            if "top of the file" in instruction.lower():
-                normalized.append(f"edit {resolve_edit_file_path(explicit_target_base or jarvis_target_file or main_script)} to insert at top of file: {instruction}")
+            if instruction.lower().startswith("add logging.basicconfig") and " after imports" in instruction.lower():
+                instruction = "insert at top of file: " + instruction
+
+            if "top of the file" in instruction.lower() or "top of file" in instruction.lower():
+                target_name = main_script
+
+                # Only allow Jarvis-core routing if the USER explicitly requested Jarvis itself.
+                if explicit_target_base:
+                    target_name = explicit_target_base
+                elif jarvis_self_request and jarvis_target_file:
+                    target_name = jarvis_target_file
+
+                cleaned_instruction = instruction.replace(
+                    "insert at top of file: ",
+                    "",
+                    1,
+                )
+
+                normalized.append(
+                    f"edit {resolve_edit_file_path(target_name)} "
+                    f"to insert at top of file: {cleaned_instruction}"
+                )
                 continue
 
             if is_vague_edit_instruction(instruction):
