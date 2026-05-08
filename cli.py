@@ -1746,6 +1746,27 @@ def run_edit(step):
     print("[EDIT APPLIED]")
     return True
 
+
+def validate_project_run_result(command, result):
+    ok = bool((result or {}).get("success"))
+    if not ok:
+        return False, "Task usefulness: project run success=False"
+
+    script = get_project_state("main_script") or ""
+    script_name = os.path.basename(script)
+    parts = (command or "").strip().split()
+    sample_dir = parts[-1].strip("\'\"") if parts else ""
+
+    if script_name == "rename_files.py":
+        renamed = any(
+            f.startswith("renamed_")
+            for f in os.listdir(sample_dir)
+        ) if os.path.isdir(sample_dir) else False
+        return renamed, f"Task usefulness: rename_files renamed_files_exist={renamed} path={sample_dir}"
+
+    return True, "Task usefulness: project run success=True"
+
+
 def run_task_usefulness_validation(command, result, current_dir, run_mode=None):
     cmd_lower = (command or '').lower().strip()
     result = result or {}
@@ -1756,23 +1777,7 @@ def run_task_usefulness_validation(command, result, current_dir, run_mode=None):
 
     # --- MODE: project run ---
     if run_mode == "project_run":
-        ok = bool(result.get("success"))
-        if not ok:
-            return False, "Task usefulness: project run success=False"
-
-        script = get_project_state("main_script") or ""
-        script_name = os.path.basename(script)
-        parts = (command or "").strip().split()
-        sample_dir = parts[-1].strip("\'\"") if parts else ""
-
-        if script_name == "rename_files.py":
-            renamed = any(
-                f.startswith("renamed_")
-                for f in os.listdir(sample_dir)
-            ) if os.path.isdir(sample_dir) else False
-            return renamed, f"Task usefulness: rename_files renamed_files_exist={renamed} path={sample_dir}"
-
-        return True, "Task usefulness: project run success=True"
+        return validate_project_run_result(command, result)
 
     # --- MODE: shell command ---
     if cmd_lower.startswith('mkdir '):
