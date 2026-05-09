@@ -33,10 +33,16 @@ run_test "project validator registry" "./tests/test_project_validator_registry.s
 run_test "retry instruction strengthening" "./tests/test_retry_instruction_strengthening.sh"
 run_test "validation rollback" "./tests/test_validation_rollback.sh"
 
-if [[ -n "$(git status --short)" ]]; then
+status_output="$(git status --short)"
+
+if [[ -n "${JARVIS_ALLOWED_DIRTY_PATH:-}" ]]; then
+  status_output="$(printf "%s\n" "$status_output" | grep -vE "^[ MARCUD?!]{1,2} ${JARVIS_ALLOWED_DIRTY_PATH}$" || true)"
+fi
+
+if [[ -n "$status_output" ]]; then
   echo
   echo "FAILED: regression tests left working tree dirty"
-  git status --short
+  printf "%s\n" "$status_output"
   exit 1
 fi
 

@@ -1009,46 +1009,46 @@ def is_weak_self_edit(file_path, instruction, old_text, new_text):
 
     return False
 
-def has_undefined_constants(new_text):
-    stripped = new_text
+def has_undefined_constants(new_text, old_text=""):
+    def strip_literals(text):
+        text = re.sub(r'"""[\s\S]*?"""' , '""', text)
+        text = re.sub(r"'''[\s\S]*?'''" , "''", text)
+        text = re.sub(r'"[^"\n]*"', '""', text)
+        text = re.sub(r"'[^'\n]*'", "''", text)
+        return text
 
-    stripped = re.sub(r'"""[\s\S]*?"""', '""', stripped)
-    stripped = re.sub(r"'''[\s\S]*?'''", "''", stripped)
-    stripped = re.sub(r'"[^"\n]*"', '""', stripped)
-    stripped = re.sub(r"'[^'\n]*'", "''", stripped)
+    def scan(text):
+        stripped = strip_literals(text)
+        pattern = r"\b[A-Z][A-Z0-9_]{2,}\b"
+        used_constants = set(re.findall(pattern, stripped))
+        defined_constants = set()
 
-    pattern = r'\b[A-Z][A-Z0-9_]{2,}\b'
+        for line in stripped.splitlines():
+            if "=" in line:
+                left = line.split("=", 1)[0].strip()
+                if re.match(r"^[A-Z][A-Z0-9_]+$", left):
+                    defined_constants.add(left)
 
-    used_constants = set(re.findall(pattern, stripped))
-    defined_constants = set()
+        builtin_allowed = {
+            "__name__",
+            "CLI",
+            "FORCE",
+            "MODE",
+            "NEW",
+            "IGNORECASE",
+            "INFO",
+            "DEBUG",
+            "WARNING",
+            "ERROR",
+            "CRITICAL",
+        }
 
-    for line in stripped.splitlines():
-        if "=" in line:
-            left = line.split("=", 1)[0].strip()
-            if re.match(r'^[A-Z][A-Z0-9_]+$', left):
-                defined_constants.add(left)
+        return set(
+            c for c in used_constants
+            if c not in defined_constants and c not in builtin_allowed
+        )
 
-    builtin_allowed = {
-        "__name__",
-        "CLI",
-        "FORCE",
-        "MODE",
-        "NEW",
-        "IGNORECASE",
-        "INFO",
-        "DEBUG",
-        "WARNING",
-        "ERROR",
-        "CRITICAL",
-    }
-
-    undefined = sorted(
-        c for c in used_constants
-        if c not in defined_constants and c not in builtin_allowed
-    )
-    return undefined
-
-
+    return sorted(scan(new_text) - scan(old_text))
 def extract_top_level_functions(text):
     boundary_matches = list(re.finditer(
         r'(?m)^(?:def [A-Za-z_][A-Za-z0-9_]*\s*\(|class [A-Za-z_][A-Za-z0-9_]*\s*(?:\(|:)|if __name__ == ["\']__main__["\']:\s*$)',
@@ -1427,7 +1427,12 @@ def run_behavior_validation(file_path, instruction, validation_mode=None):
 
         test_script = os.path.join(get_app_root(), "tests", "run_all.sh")
         if os.path.exists(test_script):
-            result = executor_mod.run_command(test_script)
+            env_prefix = ""
+            if file_path:
+                rel_path = os.path.relpath(file_path, get_app_root())
+                allowed_dirty = f"({rel_path}|tests/run_all.sh)"
+                env_prefix = f"JARVIS_ALLOWED_DIRTY_PATH='{allowed_dirty}' "
+            result = executor_mod.run_command(env_prefix + test_script)
             if not result.get("success"):
                 return False, (
                     "Behavior validation failed: regression suite failed. "
@@ -1478,6 +1483,10 @@ def record_edit_failure(reason, message):
     print(message)
     return False
 
+
+def clear_edit_failure_state():
+    set_project_state("last_edit_failure_type", "")
+    set_project_state("last_edit_failure_message", "")
 
 def strengthen_edit_instruction(instruction):
     instruction = (instruction or "").strip()
@@ -1607,6 +1616,22 @@ def run_edit(step):
         new = "\n".join(lines)
         if old.endswith("\n"):
             new += "\n"
+    elif (
+        re.search(r'change the string from ["\\\'](.+?)["\\\'] to ["\\\'](.+?)["\\\']', instruction, re.IGNORECASE)
+        or re.search(r'change the string ["\\\'](.+?)["\\\'] to ["\\\'](.+?)["\\\']', instruction, re.IGNORECASE)
+        or re.search(r'replace the string ["\\\'](.+?)["\\\'] with ["\\\'](.+?)["\\\']', instruction, re.IGNORECASE)
+    ):
+        print("[DETERMINISTIC EDIT] quoted string replacement")
+        match = (
+            re.search(r'change the string from ["\\\'](.+?)["\\\'] to ["\\\'](.+?)["\\\']', instruction, re.IGNORECASE)
+            or re.search(r'change the string ["\\\'](.+?)["\\\'] to ["\\\'](.+?)["\\\']', instruction, re.IGNORECASE)
+            or re.search(r'replace the string ["\\\'](.+?)["\\\'] with ["\\\'](.+?)["\\\']', instruction, re.IGNORECASE)
+        )
+        source_text = match.group(1)
+        replacement_text = match.group(2)
+        if source_text not in old:
+            return record_edit_failure("string_not_found", f"Rejected: string not found: {source_text}")
+        new = old.replace(source_text, replacement_text, 1)
     elif force_full_file_edit:
         if "logging.basicconfig" in lowered_instruction and "logging.basicConfig(" in old:
             print("[NO-OP] logging.basicConfig already present")
@@ -1701,7 +1726,7 @@ def run_edit(step):
 
     if not is_valid_python:
         return record_edit_failure("python_compile_failed", f"Rejected: python compile failed after edit: {python_error}")
-    undefined_constants = has_undefined_constants(new)
+    undefined_constants = has_undefined_constants(new, old)
     if undefined_constants:
         return record_edit_failure("undefined_constants", f"Rejected: undefined constants introduced: {undefined_constants}")
 
@@ -1736,8 +1761,7 @@ def run_edit(step):
     if not behavior_ok:
         print(rollback_file_after_failed_validation(file_path, old, backup_path))
         return record_edit_failure(FAILURE_BEHAVIOR_VALIDATION_FAILED, "[STOPPED] behavior validation failed after edit")
-    set_project_state("last_edit_failure_type", "")
-    set_project_state("last_edit_failure_message", "")
+    clear_edit_failure_state()
     print("[EDIT APPLIED]")
     return True
 
@@ -2471,7 +2495,7 @@ def edits_mode():
 
 def help_mode():
     print("""
-Commands:
+Available commands:
   continue <request>     Autonomous context-aware edit/run loop
   context                Prompt for a continue-style request
   planner                Generate and show a plan
