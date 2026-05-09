@@ -699,6 +699,67 @@ def route_web_edit_target_from_text(step_text="", instruction_text="", request_t
     return ""
 
 
+
+
+def extract_file_refs_from_shell_step(step):
+    if not step:
+        return []
+
+    pattern = r'(?<![\w/.-])(?:\./)?((?:tests/)?[A-Za-z0-9_.-]+(?:/[A-Za-z0-9_.-]+)*\.(?:py|sh))(?![\w/.-])'
+    return re.findall(pattern, step)
+
+
+def latest_edit_target_from_steps(steps):
+    for step in reversed(steps or []):
+        if not is_edit_step(step):
+            continue
+
+        head = step.split(" to ", 1)[0]
+        return head[len("edit "):].strip()
+
+    return ""
+
+
+def is_py_compile_step(step):
+    lowered = (step or "").strip().lower()
+    return lowered.startswith("python3 -m py_compile ") or lowered.startswith("python -m py_compile ")
+
+
+def references_nonexistent_test_file(step):
+    app_root = get_app_root()
+
+    for ref in extract_file_refs_from_shell_step(step):
+        if not ref.startswith("tests/"):
+            continue
+
+        if not os.path.exists(os.path.join(app_root, ref)):
+            return True
+
+    return False
+
+
+def context_shell_validation_step_is_allowed(step, latest_edit_target=""):
+    if references_nonexistent_test_file(step):
+        return False
+
+    lowered = (step or "").strip().lower()
+
+    if lowered in {"bash tests/run_all.sh", "./tests/run_all.sh", "tests/run_all.sh"}:
+        return True
+
+    if is_py_compile_step(step) and latest_edit_target:
+        edit_base = os.path.basename(latest_edit_target)
+        refs = extract_file_refs_from_shell_step(step)
+        ref_bases = {os.path.basename(ref) for ref in refs}
+
+        if edit_base in JARVIS_APP_FILES:
+            app_refs = ref_bases.intersection(JARVIS_APP_FILES)
+            if app_refs and edit_base not in app_refs:
+                return False
+
+    return True
+
+
 def normalize_context_steps(steps, request_text=""):
     main_script = get_project_state("main_script") or get_project_state("main_script_name")
     normalized = []
@@ -814,6 +875,10 @@ def normalize_context_steps(steps, request_text=""):
                 or " path" in shell_lower
                 or "/path" in shell_lower
             ):
+                continue
+
+            latest_edit_target = latest_edit_target_from_steps(normalized)
+            if not context_shell_validation_step_is_allowed(s, latest_edit_target):
                 continue
 
             normalized.append(s)

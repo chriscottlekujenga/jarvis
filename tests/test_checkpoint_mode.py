@@ -64,7 +64,6 @@ def test_build_allowed_dirty_path_pattern_groups_multiple_files():
         "cli.py",
         "tests/test_checkpoint_mode.py",
     ]) == "(cli\\.py|tests/test_checkpoint_mode\\.py)"
-\n\n
 
 def test_parse_checkpoint_file_selection_all():
     files = ["cli.py", "tests/test_checkpoint_mode.py"]
@@ -91,7 +90,6 @@ def test_parse_checkpoint_file_selection_rejects_out_of_range():
     selected, error = cli.parse_checkpoint_file_selection(["cli.py"], "2")
     assert selected is None
     assert "out of range" in error
-\n\n
 
 def test_commit_checkpoint_validates_with_all_dirty_files_but_stages_selected_files():
     dirty_files = ["CHECKPOINT_SMOKE.txt", "README.md"]
@@ -100,7 +98,6 @@ def test_commit_checkpoint_validates_with_all_dirty_files_but_stages_selected_fi
     assert "CHECKPOINT_SMOKE.txt" in dirty_files
     assert "CHECKPOINT_SMOKE.txt" not in selected_files
     assert cli.build_allowed_dirty_path_pattern(dirty_files) == "(CHECKPOINT_SMOKE\\.txt|README\\.md)"
-\n\n
 
 def test_run_command_capture_accepts_env():
     fake_env = {"JARVIS_ALLOWED_DIRTY_PATH": "README\\.md"}
@@ -118,7 +115,6 @@ def test_run_command_capture_accepts_env():
         cli.run_command_capture(["git", "status"], env=fake_env)
 
     assert captured["env"] == fake_env
-\n
 
 
 def test_route_web_edit_target_uses_request_text_for_css(monkeypatch):
@@ -240,4 +236,32 @@ def test_commit_checkpoint_mode_accepts_inline_message(monkeypatch):
     cli.commit_checkpoint_mode("inline commit message")
 
     assert ["git", "commit", "-m", "inline commit message"] in calls
+
+
+def test_context_shell_validation_rejects_unrelated_py_compile_target():
+    assert not cli.context_shell_validation_step_is_allowed(
+        "python3 -m py_compile files.py",
+        "/home/chris/jarvis/cli.py",
+    )
+
+
+def test_context_shell_validation_allows_matching_py_compile_target():
+    assert cli.context_shell_validation_step_is_allowed(
+        "python3 -m py_compile cli.py",
+        "/home/chris/jarvis/cli.py",
+    )
+
+
+def test_context_shell_validation_rejects_nonexistent_pytest_file():
+    assert not cli.context_shell_validation_step_is_allowed(
+        "python3 -m pytest tests/test_cli.py",
+        "/home/chris/jarvis/cli.py",
+    )
+
+
+def test_context_shell_validation_allows_full_regression_suite():
+    assert cli.context_shell_validation_step_is_allowed(
+        "bash tests/run_all.sh",
+        "/home/chris/jarvis/cli.py",
+    )
 
