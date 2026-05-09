@@ -169,3 +169,18 @@ def test_deterministic_html_h1_edit_handles_text_inside_h1_instruction():
     assert isinstance(new, str)
     assert "<h1>Welcome to Test Web Epsilon</h1>" in new
 
+def test_extract_requested_heading_text_from_text_inside_h1_tags_from_to_instruction():
+    assert cli.extract_requested_heading_text(
+        'change the text inside the <h1> tags from "Test Project" to "Welcome to Test Web Epsilon"'
+    ) == "Welcome to Test Web Epsilon"
+
+
+def test_deterministic_html_h1_edit_handles_text_inside_h1_tags_from_to_instruction():
+    old = "<!doctype html>\n<h1>Hello from Jarvis</h1>\n"
+    new = cli.deterministic_html_h1_edit(
+        old,
+        'change the text inside the <h1> tags from "Test Project" to "Welcome to Test Web Epsilon"',
+    )
+    assert isinstance(new, str)
+    assert "<h1>Welcome to Test Web Epsilon</h1>" in new
+

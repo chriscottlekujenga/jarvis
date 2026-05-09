@@ -899,7 +899,7 @@ def extract_requested_heading_text(instruction):
 
     patterns = [
         r'heading\s+(?:to say|to read|text to|from .*? to)\s+["\'](.+?)["\']',
-        r'(?:content|text)\s+(?:of|inside)\s+the\s+<h1>\s+tag\s+to\s+["\'](.+?)["\']',
+        r'(?:content|text)\s+(?:of|inside)\s+the\s+<h1>\s+tags?\s+(?:from\s+["\'].+?["\']\s+)?to\s+["\'](.+?)["\']',
         r'<h1>\s+tags?\s+to\s+["\'](.+?)["\']',
         r'h1\s+(?:to say|to read|text to)\s+["\'](.+?)["\']',
     ]
