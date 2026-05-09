@@ -787,6 +787,15 @@ def normalize_context_steps(steps, request_text=""):
 
             normalized.append(s)
 
+        # Route requests to styles.css or script.js based on keywords
+        if re.search(r'\b(css|style|color|layout|font|spacing|responsive)\b', instruction, re.IGNORECASE):
+            target_path = os.path.join(get_project_state("project_root"), "styles.css")
+        elif re.search(r'\b(javascript|js|click|button behavior|event|alert|interactive behavior)\b', instruction, re.IGNORECASE):
+            target_path = os.path.join(get_project_state("project_root"), "script.js")
+
+        if 'target_path' in locals():
+            normalized.append(f"edit {target_path} to {instruction}")
+
     return normalized
 def get_main_script_path():
     main_script = get_project_state("main_script")
