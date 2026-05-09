@@ -2251,6 +2251,9 @@ def create_project(project_name, projects_root=None, project_type="python"):
     if project_root == app_root or project_root.startswith(app_root + os.sep):
         return False, f"Refusing to create user project inside Jarvis core: {project_root}"
 
+    if os.path.exists(project_root) and os.listdir(project_root):
+        return False, f"Project already exists and is not empty: {project_root}"
+
     os.makedirs(project_root, exist_ok=True)
 
     readme_path = os.path.join(project_root, "README.md")

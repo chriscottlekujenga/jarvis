@@ -115,6 +115,22 @@ def test_create_project_rejects_unknown_project_type():
         assert "Unsupported project type" in message
 
 
+def test_create_project_rejects_existing_non_empty_project_without_changing_context():
+    with tempfile.TemporaryDirectory() as tmp:
+        ok, message = cli.create_project("Existing App", projects_root=tmp)
+        assert ok, message
+
+        original_root = cli.get_project_state("project_root")
+        original_main_script = cli.get_project_state("main_script")
+
+        ok, message = cli.create_project("Existing App", projects_root=tmp)
+        assert not ok
+        assert "Project already exists and is not empty" in message
+
+        assert cli.get_project_state("project_root") == original_root
+        assert cli.get_project_state("main_script") == original_main_script
+
+
 def test_create_project_rejects_projects_inside_jarvis_core():
     ok, message = cli.create_project("bad_app", projects_root=APP_ROOT)
     assert not ok
