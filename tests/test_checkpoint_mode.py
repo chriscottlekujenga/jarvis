@@ -54,3 +54,14 @@ def test_run_core_validation_uses_allowed_dirty_pattern():
 
 
 print("PASS: checkpoint mode")
+
+def test_build_allowed_dirty_path_pattern_escapes_single_file():
+    assert cli.build_allowed_dirty_path_pattern("cli.py".split()) == "cli\\.py"
+
+
+def test_build_allowed_dirty_path_pattern_groups_multiple_files():
+    assert cli.build_allowed_dirty_path_pattern([
+        "cli.py",
+        "tests/test_checkpoint_mode.py",
+    ]) == "(cli\\.py|tests/test_checkpoint_mode\\.py)"
+\n

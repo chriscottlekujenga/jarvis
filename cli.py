@@ -2496,6 +2496,18 @@ def create_project(project_name, projects_root=None, project_type="python"):
     return True, f"Created {project_type} project: {project_root}"
 
 
+def build_allowed_dirty_path_pattern(paths):
+    cleaned = [path for path in (paths or []) if path]
+    if not cleaned:
+        return ""
+
+    escaped = [re.escape(path) for path in cleaned]
+    if len(escaped) == 1:
+        return escaped[0]
+
+    return "(" + "|".join(escaped) + ")"
+
+
 def run_command_capture(args, cwd=None):
     return subprocess.run(
         args,
