@@ -1952,6 +1952,28 @@ def run_task_usefulness_validation(command, result, current_dir, run_mode=None):
         ok = bool(result.get("success")) and target.endswith(".py") and os.path.isfile(target)
         return ok, f"Task usefulness: py_compile target_exists={ok} path={target}"
 
+    if cmd_lower.startswith(("python ", "python3 ")) and " -m " not in cmd_lower:
+        parts = (command or "").strip().split()
+        script = ""
+        for part in parts[1:]:
+            candidate = part.strip("\'\"")
+            if candidate.endswith(".py"):
+                script = candidate
+                break
+
+        script_path = script
+        if script_path and not os.path.isabs(script_path):
+            script_path = os.path.join(current_dir, script_path)
+
+        stderr = result.get("stderr") or ""
+        ok = (
+            bool(result.get("success"))
+            and bool(script_path)
+            and os.path.isfile(script_path)
+            and "traceback" not in stderr.lower()
+        )
+        return ok, f"Task usefulness: python_script success={bool(result.get('success'))} script_exists={os.path.isfile(script_path) if script_path else False} traceback={'traceback' in stderr.lower()} path={script_path}"
+
     return True, 'Task usefulness: no extra validation for this command.'
 
 

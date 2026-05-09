@@ -43,3 +43,37 @@ def test_py_compile_usefulness_fails_when_command_failed():
 
 
 print("PASS: task usefulness validation")
+
+
+def test_python_script_usefulness_passes_for_existing_script():
+    ok, msg = cli.run_task_usefulness_validation(
+        "python3 jarvis.py",
+        {"success": True, "stderr": ""},
+        APP_ROOT,
+        run_mode="shell_command",
+    )
+    assert ok
+    assert "python_script success=True" in msg
+    assert "script_exists=True" in msg
+
+
+def test_python_script_usefulness_fails_for_missing_script():
+    ok, msg = cli.run_task_usefulness_validation(
+        "python3 missing_script.py",
+        {"success": True, "stderr": ""},
+        APP_ROOT,
+        run_mode="shell_command",
+    )
+    assert not ok
+    assert "script_exists=False" in msg
+
+
+def test_python_script_usefulness_fails_on_traceback():
+    ok, msg = cli.run_task_usefulness_validation(
+        "python3 jarvis.py",
+        {"success": True, "stderr": "Traceback (most recent call last):"},
+        APP_ROOT,
+        run_mode="shell_command",
+    )
+    assert not ok
+    assert "traceback=True" in msg
