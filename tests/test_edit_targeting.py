@@ -79,3 +79,19 @@ def test_explicit_core_file_request_targets_core_even_from_project_context():
     steps = ["edit cli.py to change help output text"]
     normalized = cli.normalize_context_steps(steps, "change cli.py help output text")
     assert normalized == [f"edit {APP_ROOT}/cli.py to change help output text"]
+
+def test_context_normalization_drops_chained_shell_validation_step():
+    setup_context()
+    steps = [
+        'python3 -m http.server --port 8000 & curl http://localhost:8000 | grep "Welcome" && echo "ok" || echo "failed"'
+    ]
+    normalized = cli.normalize_context_steps(steps, "change the heading")
+    assert normalized == []
+
+
+def test_context_normalization_keeps_simple_safe_shell_step():
+    setup_context()
+    steps = ["ls"]
+    normalized = cli.normalize_context_steps(steps, "list files")
+    assert normalized == ["ls"]
+

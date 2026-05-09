@@ -428,6 +428,12 @@ def is_run_step(step):
         "run the project script",
     ]
     return any(phrase in lowered for phrase in run_phrases)
+def has_unsafe_shell_chaining(step):
+    s = step or ""
+    unsafe_tokens = ("&&", "||", ";", " & ", " &", "& ")
+    return any(token in s for token in unsafe_tokens)
+
+
 def is_literal_shell_step(step):
     if not isinstance(step, str):
         return False
@@ -751,6 +757,9 @@ def normalize_context_steps(steps, request_text=""):
             continue
 
         if is_literal_shell_step(s):
+            if has_unsafe_shell_chaining(s):
+                continue
+
             # BLOCK raw project script runs in context mode; auto-run handles project validation.
             main_script_name = get_project_state("main_script_name")
             main_script_path = get_project_state("main_script")
