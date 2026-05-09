@@ -198,3 +198,21 @@ def test_small_project_asset_append_rejects_rewrite():
         max_changed_lines=8,
     )
 
+
+def test_cleanup_successful_edit_backup_removes_existing_file(tmp_path):
+    backup = tmp_path / "example.py.bak.20260509_120000"
+    backup.write_text("old content")
+
+    message = cli.cleanup_successful_edit_backup(str(backup))
+
+    assert not backup.exists()
+    assert "removed successful edit backup" in message
+
+
+def test_cleanup_successful_edit_backup_ignores_missing_file(tmp_path):
+    backup = tmp_path / "missing.py.bak"
+
+    message = cli.cleanup_successful_edit_backup(str(backup))
+
+    assert message == ""
+

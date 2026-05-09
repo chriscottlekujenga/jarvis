@@ -2001,9 +2001,26 @@ def run_edit(step):
         print(rollback_file_after_failed_validation(file_path, old, backup_path))
         return record_edit_failure(FAILURE_BEHAVIOR_VALIDATION_FAILED, "[STOPPED] behavior validation failed after edit")
     clear_edit_failure_state()
+    cleanup_message = cleanup_successful_edit_backup(backup_path)
+    if cleanup_message:
+        print(cleanup_message)
     print("[EDIT APPLIED]")
     return True
 
+
+
+def cleanup_successful_edit_backup(backup_path):
+    if not backup_path:
+        return ""
+
+    if not os.path.exists(backup_path):
+        return ""
+
+    try:
+        os.remove(backup_path)
+        return f"[BACKUP CLEANUP] removed successful edit backup: {backup_path}"
+    except OSError as exc:
+        return f"[BACKUP CLEANUP WARNING] could not remove backup {backup_path}: {exc}"
 
 
 def rollback_file_after_failed_validation(file_path, old_text, backup_path):
