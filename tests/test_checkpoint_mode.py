@@ -159,3 +159,42 @@ def test_route_web_edit_target_ignores_python_project(monkeypatch):
         "continue change button color",
     ) == ""
 
+
+def test_small_project_asset_append_allowed_for_tiny_js():
+    old = 'console.log("ready");\n'
+    new = old + 'document.body.addEventListener("click", () => alert("Clicked"));\n'
+
+    assert cli.is_small_project_asset_append_allowed(
+        "/tmp/project/script.js",
+        old,
+        new,
+        changed_lines=1,
+        max_changed_lines=8,
+    )
+
+
+def test_small_project_asset_append_rejects_core_app_file():
+    old = 'print("ready")\n'
+    new = old + 'print("clicked")\n'
+
+    assert not cli.is_small_project_asset_append_allowed(
+        "/home/chris/jarvis/cli.py",
+        old,
+        new,
+        changed_lines=1,
+        max_changed_lines=8,
+    )
+
+
+def test_small_project_asset_append_rejects_rewrite():
+    old = 'console.log("ready");\n'
+    new = 'alert("Clicked");\n'
+
+    assert not cli.is_small_project_asset_append_allowed(
+        "/tmp/project/script.js",
+        old,
+        new,
+        changed_lines=1,
+        max_changed_lines=8,
+    )
+

@@ -868,6 +868,32 @@ def resolve_edit_file_path(file_name):
     return cwd_path
 
 
+def is_small_project_asset_append_allowed(file_path, old_text, new_text, changed_lines, max_changed_lines):
+    if is_app_file_path(file_path):
+        return False
+
+    extension = os.path.splitext(file_path or "")[1].lower()
+    if extension not in {".css", ".js", ".html", ".htm"}:
+        return False
+
+    old_lines = (old_text or "").splitlines()
+    new_lines = (new_text or "").splitlines()
+
+    if len(old_lines) > 20:
+        return False
+
+    if changed_lines > max_changed_lines:
+        return False
+
+    old_normalized = (old_text or "").rstrip()
+    new_normalized = (new_text or "").rstrip()
+
+    if not old_normalized:
+        return bool(new_normalized)
+
+    return new_normalized.startswith(old_normalized)
+
+
 def calculate_diff_stats(old_text, new_text):
     old_lines = old_text.splitlines()
     new_lines = new_text.splitlines()
@@ -1961,7 +1987,8 @@ def run_edit(step):
         return record_edit_failure("too_many_lines_changed", f"Rejected: too many lines changed ({changed_lines})")
 
     if diff_ratio > max_diff_ratio:
-        return record_edit_failure("diff_too_large", f"Rejected: diff too large ({diff_ratio:.0%})")
+        if not is_small_project_asset_append_allowed(file_path, old, new, changed_lines, max_changed_lines):
+            return record_edit_failure("diff_too_large", f"Rejected: diff too large ({diff_ratio:.0%})")
 
     show_diff(old, new, file_path)
     validation_mode = choose_validation_mode(file_path, old, instruction)
