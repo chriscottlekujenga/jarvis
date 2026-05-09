@@ -3240,6 +3240,7 @@ Commands:
 
 
 def main():
+    # context validation filter smoke test
     init_db()
     set_current_dir(os.getcwd())
     
@@ -3303,14 +3304,8 @@ def main():
             clear_project_state()
             print("Project state cleared.")
 
-        elif user_input == "commit checkpoint" or user_input == "checkpoint commit":
-            commit_checkpoint_mode()
-
-        elif user_input.startswith("commit checkpoint "):
-            commit_checkpoint_mode(user_input[len("commit checkpoint "):].strip())
-
-        elif user_input.startswith("checkpoint commit "):
-            commit_checkpoint_mode(user_input[len("checkpoint commit "):].strip())
+        elif user_input.startswith("commit checkpoint") or user_input.startswith("checkpoint commit"):
+            commit_checkpoint_mode(user_input[len("commit checkpoint"):].strip() if user_input.startswith("commit checkpoint") else user_input[len("checkpoint commit"):].strip())
 
         elif user_input.startswith("setcontext "):
             parts = user_input[len("setcontext "):].strip().split()
