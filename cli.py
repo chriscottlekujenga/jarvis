@@ -1895,6 +1895,48 @@ def validate_project_run_result(command, result):
     return True, "Task usefulness: project run success=True"
 
 
+def validate_current_project():
+    project_root = get_project_state("project_root")
+    project_type = get_project_state("project_type") or "python"
+    main_script_name = get_project_state("main_script_name")
+    main_script = get_project_state("main_script")
+
+    if not project_root or not os.path.isdir(project_root):
+        return False, "Project validation failed: project_root missing"
+
+    if project_type == "python":
+        if not main_script_name:
+            return False, "Project validation failed: main_script_name missing"
+
+        result = subprocess.run(
+            ["python3", "-m", "py_compile", main_script_name],
+            cwd=project_root,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        if result.returncode != 0:
+            return False, result.stderr.strip() or "Project validation failed: python compile failed"
+
+        return True, f"Project validation passed: python py_compile {main_script_name}"
+
+    if project_type == "web":
+        required_files = ["index.html", "styles.css", "script.js"]
+        missing = [
+            name for name in required_files
+            if not os.path.isfile(os.path.join(project_root, name))
+        ]
+        if missing:
+            return False, f"Project validation failed: missing web files {', '.join(missing)}"
+
+        if main_script and not os.path.isfile(main_script):
+            return False, f"Project validation failed: main_script missing {main_script}"
+
+        return True, "Project validation passed: web files exist"
+
+    return False, f"Project validation failed: unsupported project_type {project_type}"
+
+
 def run_task_usefulness_validation(command, result, current_dir, run_mode=None):
     cmd_lower = (command or '').lower().strip()
     result = result or {}

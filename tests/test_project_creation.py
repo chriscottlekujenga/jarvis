@@ -137,4 +137,36 @@ def test_create_project_rejects_projects_inside_jarvis_core():
     assert "Refusing to create user project inside Jarvis core" in message
 
 
+def test_validate_current_python_project_uses_py_compile():
+    with tempfile.TemporaryDirectory() as tmp:
+        ok, message = cli.create_project("Validate Python", projects_root=tmp, project_type="python")
+        assert ok, message
+
+        ok, message = cli.validate_current_project()
+        assert ok, message
+        assert "python py_compile app.py" in message
+
+
+def test_validate_current_web_project_checks_required_files():
+    with tempfile.TemporaryDirectory() as tmp:
+        ok, message = cli.create_project("Validate Web", projects_root=tmp, project_type="web")
+        assert ok, message
+
+        ok, message = cli.validate_current_project()
+        assert ok, message
+        assert "web files exist" in message
+
+
+def test_validate_current_web_project_fails_when_required_file_missing():
+    with tempfile.TemporaryDirectory() as tmp:
+        ok, message = cli.create_project("Broken Web", projects_root=tmp, project_type="web")
+        assert ok, message
+
+        os.remove(os.path.join(tmp, "broken_web", "styles.css"))
+
+        ok, message = cli.validate_current_project()
+        assert not ok
+        assert "missing web files styles.css" in message
+
+
 print("PASS: project creation flow")
