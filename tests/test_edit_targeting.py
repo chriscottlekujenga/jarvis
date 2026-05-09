@@ -115,3 +115,27 @@ def test_strip_model_edit_artifacts_does_not_remove_real_html_tag():
     cleaned = cli.strip_model_edit_artifacts(raw, "/tmp/index.html")
     assert cleaned == raw
 
+def test_extract_requested_heading_text_from_heading_instruction():
+    assert cli.extract_requested_heading_text(
+        'change the heading to say "Welcome Home"'
+    ) == "Welcome Home"
+
+
+def test_deterministic_html_h1_edit_changes_only_first_h1_text():
+    old = "<!doctype html>\n<h1>Hello from Jarvis</h1>\n<p>Body</p>\n"
+    new = cli.deterministic_html_h1_edit(
+        old,
+        'change the heading to say "Welcome Home"',
+    )
+    assert "<h1>Welcome Home</h1>" in new
+    assert "<p>Body</p>" in new
+    assert "Hello from Jarvis" not in new
+
+
+def test_deterministic_html_h1_edit_returns_none_without_h1():
+    old = "<!doctype html>\n<p>No heading</p>\n"
+    assert cli.deterministic_html_h1_edit(
+        old,
+        'change the heading to say "Welcome Home"',
+    ) is None
+

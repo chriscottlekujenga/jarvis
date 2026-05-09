@@ -893,6 +893,43 @@ def instruction_mentions_entrypoint(instruction):
 def strip_model_edit_artifacts(text, file_path=""):
     if text is None:
         return text
+def extract_requested_heading_text(instruction):
+    if not instruction:
+        return None
+
+    patterns = [
+        r'heading\s+(?:to say|to read|text to|from .*? to)\s+["\'](.+?)["\']',
+        r'<h1>\s*tags?\s+to\s+["\'](.+?)["\']',
+        r'h1\s+(?:to say|to read|text to)\s+["\'](.+?)["\']',
+    ]
+
+    for pattern in patterns:
+        match = re.search(pattern, instruction, re.IGNORECASE)
+        if match:
+            return match.group(1).strip()
+
+    return None
+
+
+def deterministic_html_h1_edit(old_text, instruction):
+    heading_text = extract_requested_heading_text(instruction)
+    if not heading_text:
+        return None
+
+    pattern = r'(<h1[^>]*>)(.*?)(</h1>)'
+    match = re.search(pattern, old_text, re.IGNORECASE | re.DOTALL)
+    if not match:
+        return None
+
+    return re.sub(
+        pattern,
+        lambda m: f"{m.group(1)}{heading_text}{m.group(3)}",
+        old_text,
+        count=1,
+        flags=re.IGNORECASE | re.DOTALL,
+    )
+
+
 
     cleaned = text.strip()
 
@@ -1740,6 +1777,9 @@ def run_edit(step):
         new = "\n".join(lines)
         if old.endswith("\n"):
             new += "\n"
+    elif os.path.splitext(file_path)[1].lower() in {".html", ".htm"} and deterministic_html_h1_edit(old, instruction):
+        print("[DETERMINISTIC EDIT] html h1 replacement")
+        new = deterministic_html_h1_edit(old, instruction)
     elif (
         re.search(r'change the string from ["\\\'](.+?)["\\\'] to ["\\\'](.+?)["\\\']', instruction, re.IGNORECASE)
         or re.search(r'change the string ["\\\'](.+?)["\\\'] to ["\\\'](.+?)["\\\']', instruction, re.IGNORECASE)
