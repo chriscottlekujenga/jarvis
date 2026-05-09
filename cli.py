@@ -1944,6 +1944,14 @@ def run_task_usefulness_validation(command, result, current_dir, run_mode=None):
         ok = os.path.isdir(git_dir)
         return ok, f"Task usefulness: git init created_git_dir={ok} path={git_dir}"
 
+    if " -m py_compile " in cmd_lower:
+        parts = (command or "").strip().split()
+        target = parts[-1].strip("\'\"") if parts else ""
+        if target and not os.path.isabs(target):
+            target = os.path.join(current_dir, target)
+        ok = bool(result.get("success")) and target.endswith(".py") and os.path.isfile(target)
+        return ok, f"Task usefulness: py_compile target_exists={ok} path={target}"
+
     return True, 'Task usefulness: no extra validation for this command.'
 
 
