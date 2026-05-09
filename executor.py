@@ -24,6 +24,32 @@ def retry_command_has_placeholder(command):
     return any(token in lowered for token in PLACEHOLDER_RETRY_TOKENS)
 
 
+JARVIS_CORE_FILES = (
+    "jarvis.py",
+    "cli.py",
+    "db.py",
+    "executor.py",
+    "files.py",
+    "llm.py",
+    "skills.py",
+    "verifier.py",
+)
+
+
+def deterministic_retry_command(command, stderr_text=""):
+    command = (command or "").strip()
+    stderr_text = stderr_text or ""
+
+    if "No such file or directory" not in stderr_text:
+        return ""
+
+    for filename in JARVIS_CORE_FILES:
+        if command.endswith(f" {filename}") or command.endswith(f" ./{filename}"):
+            return command.rsplit(" ", 1)[0] + f" /home/chris/jarvis/{filename}"
+
+    return ""
+
+
 def get_current_dir():
     return CURRENT_DIR
 
@@ -276,12 +302,16 @@ def try_step_with_retry(step_text, command, run_mode=None):
 
     for attempt in range(1, MAX_RETRY_ATTEMPTS + 1):
         print(f"\nRetry attempt {attempt}/{MAX_RETRY_ATTEMPTS}")
-        fixed_command = ask_llm_retry(
-            step_text,
-            command,
-            run_result["stdout"],
-            run_result["stderr"],
-        ).strip()
+        fixed_command = deterministic_retry_command(command, run_result["stderr"])
+        if fixed_command:
+            print("[DETERMINISTIC RETRY] repaired command from known file context")
+        else:
+            fixed_command = ask_llm_retry(
+                step_text,
+                command,
+                run_result["stdout"],
+                run_result["stderr"],
+            ).strip()
 
         retry_info = classify_command(fixed_command)
 

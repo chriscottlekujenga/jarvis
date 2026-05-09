@@ -18,3 +18,27 @@ def test_normal_retry_command_is_allowed():
 
 
 print("PASS: retry command placeholder guards")
+
+
+def test_deterministic_retry_repairs_relative_core_py_compile():
+    fixed = executor.deterministic_retry_command(
+        "python3 -m py_compile cli.py",
+        "[Errno 2] No such file or directory: 'cli.py'",
+    )
+    assert fixed == "python3 -m py_compile /home/chris/jarvis/cli.py"
+
+
+def test_deterministic_retry_repairs_dot_relative_core_py_compile():
+    fixed = executor.deterministic_retry_command(
+        "python3 -m py_compile ./executor.py",
+        "[Errno 2] No such file or directory: './executor.py'",
+    )
+    assert fixed == "python3 -m py_compile /home/chris/jarvis/executor.py"
+
+
+def test_deterministic_retry_ignores_unrelated_errors():
+    fixed = executor.deterministic_retry_command(
+        "python3 -m py_compile cli.py",
+        "SyntaxError: invalid syntax",
+    )
+    assert fixed == ""
