@@ -169,4 +169,30 @@ def test_validate_current_web_project_fails_when_required_file_missing():
         assert "missing web files styles.css" in message
 
 
+def test_run_project_script_falls_back_to_python_project_validation_without_samples():
+    with tempfile.TemporaryDirectory() as tmp:
+        ok, message = cli.create_project("Run Python No Samples", projects_root=tmp, project_type="python")
+        assert ok, message
+
+        assert cli.run_project_script()
+
+
+def test_run_project_script_falls_back_to_web_project_validation_without_samples():
+    with tempfile.TemporaryDirectory() as tmp:
+        ok, message = cli.create_project("Run Web No Samples", projects_root=tmp, project_type="web")
+        assert ok, message
+
+        assert cli.run_project_script()
+
+
+def test_run_project_script_fallback_fails_for_broken_web_project():
+    with tempfile.TemporaryDirectory() as tmp:
+        ok, message = cli.create_project("Run Broken Web", projects_root=tmp, project_type="web")
+        assert ok, message
+
+        os.remove(os.path.join(tmp, "run_broken_web", "script.js"))
+
+        assert not cli.run_project_script()
+
+
 print("PASS: project creation flow")

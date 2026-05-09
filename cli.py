@@ -2099,9 +2099,14 @@ def run_project_script():
     elif sample_dir and os.path.isdir(sample_dir):
         source_dir = sample_dir
 
-    if not script or not source_dir:
-        print("Missing script or sample input directory")
+    if not script:
+        print("Missing script")
         return False
+
+    if not source_dir:
+        ok, message = validate_current_project()
+        print(f"[PROJECT VALIDATION] {message}")
+        return ok
 
     temp_root = tempfile.mkdtemp(prefix="jarvis_smoke_")
     temp_sample_dir = os.path.join(temp_root, "samples")
