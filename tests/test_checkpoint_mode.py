@@ -265,3 +265,28 @@ def test_context_shell_validation_allows_full_regression_suite():
         "/home/chris/jarvis/cli.py",
     )
 
+
+def test_normalize_context_steps_drops_bad_validation_steps(monkeypatch):
+    monkeypatch.setattr(cli, "get_project_state", lambda key, default="": {
+        "main_script": "/home/chris/jarvis/cli.py",
+        "main_script_name": "cli.py",
+        "project_root": "/home/chris/jarvis",
+    }.get(key, default))
+
+    steps = [
+        "edit /home/chris/jarvis/cli.py to add stricter validation",
+        "python3 -m py_compile llm.py",
+        "python3 -m pytest tests/test_cli.py",
+        "bash tests/run_all.sh",
+    ]
+
+    normalized = cli.normalize_context_steps(
+        steps,
+        "edit cli.py to add stricter validation",
+    )
+
+    assert normalized == [
+        "edit /home/chris/jarvis/cli.py to add stricter validation",
+        "bash tests/run_all.sh",
+    ]
+
