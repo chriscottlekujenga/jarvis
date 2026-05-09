@@ -2496,6 +2496,114 @@ def create_project(project_name, projects_root=None, project_type="python"):
     return True, f"Created {project_type} project: {project_root}"
 
 
+def run_command_capture(args, cwd=None):
+    return subprocess.run(
+        args,
+        cwd=cwd or get_app_root(),
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+
+
+def get_git_dirty_files():
+    result = run_command_capture(["git", "status", "--short"])
+    if result.returncode != 0:
+        return None, result.stderr.strip() or "git status failed"
+
+    files = []
+    for line in result.stdout.splitlines():
+        if not line.strip():
+            continue
+        files.append(line[3:].strip())
+
+    return files, ""
+
+
+def run_core_validation_for_dirty_files(dirty_files):
+    allowed_pattern = build_allowed_dirty_path_pattern(dirty_files)
+
+    compile_result = run_command_capture([
+        "python3", "-m", "py_compile",
+        "jarvis.py", "cli.py", "db.py", "executor.py",
+        "files.py", "llm.py", "skills.py", "verifier.py",
+    ])
+    if compile_result.returncode != 0:
+        return False, compile_result.stdout + compile_result.stderr
+
+    env = os.environ.copy()
+    if allowed_pattern:
+        env["JARVIS_ALLOWED_DIRTY_PATH"] = allowed_pattern
+
+    test_result = subprocess.run(
+        ["bash", "tests/run_all.sh"],
+        cwd=get_app_root(),
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    if test_result.returncode != 0:
+        return False, test_result.stdout + test_result.stderr
+
+    return True, test_result.stdout + test_result.stderr
+
+
+def commit_checkpoint_mode():
+    dirty_files, error = get_git_dirty_files()
+    if dirty_files is None:
+        print(error)
+        print("[FAILED]")
+        return
+
+    if not dirty_files:
+        print("No changes to checkpoint.")
+        return
+
+    print("\n[DIRTY FILES]")
+    for path in dirty_files:
+        print(f"- {path}")
+
+    print("\n[VALIDATION]")
+    ok, output = run_core_validation_for_dirty_files(dirty_files)
+    print(output.rstrip())
+
+    if not ok:
+        print("[STOPPED] validation failed; nothing committed")
+        return
+
+    message = input("Commit message > ").strip()
+    if not message:
+        print("[STOPPED] commit message required")
+        return
+
+    confirm = input("Stage, commit, and push these files? (y/n): ").strip().lower()
+    if confirm != "y":
+        print("[SKIPPED]")
+        return
+
+    add_result = run_command_capture(["git", "add", *dirty_files])
+    if add_result.returncode != 0:
+        print(add_result.stderr.strip() or "git add failed")
+        print("[FAILED]")
+        return
+
+    commit_result = run_command_capture(["git", "commit", "-m", message])
+    print((commit_result.stdout + commit_result.stderr).rstrip())
+    if commit_result.returncode != 0:
+        print("[FAILED]")
+        return
+
+    push_result = run_command_capture(["git", "push"])
+    print((push_result.stdout + push_result.stderr).rstrip())
+    if push_result.returncode != 0:
+        print("[FAILED]")
+        return
+
+    print("[OK] checkpoint committed and pushed")
+
+
 def create_project_mode(project_name, project_type="python"):
     ok, message = create_project(project_name, project_type=project_type)
     print(message)
@@ -2977,6 +3085,9 @@ def main():
         elif user_input == "clearstate":
             clear_project_state()
             print("Project state cleared.")
+
+        elif user_input in {"commit checkpoint", "checkpoint commit"}:
+            commit_checkpoint_mode()
 
         elif user_input.startswith("setcontext "):
             parts = user_input[len("setcontext "):].strip().split()
