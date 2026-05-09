@@ -9,6 +9,21 @@ CURRENT_DIR = os.getcwd()
 MAX_RETRY_ATTEMPTS = 1
 
 
+PLACEHOLDER_RETRY_TOKENS = (
+    "/path/to/",
+    "<path>",
+    "<file>",
+    "your_file",
+    "filename",
+    "example.py",
+)
+
+
+def retry_command_has_placeholder(command):
+    lowered = (command or "").lower()
+    return any(token in lowered for token in PLACEHOLDER_RETRY_TOKENS)
+
+
 def get_current_dir():
     return CURRENT_DIR
 
@@ -276,6 +291,11 @@ def try_step_with_retry(step_text, command, run_mode=None):
 
         if not retry_info.get("valid", False):
             print("Retry command failed classification.")
+            return False, command, "failed", run_result
+
+        if retry_command_has_placeholder(fixed_command):
+            print("Retry command contains placeholder path. Rejecting.")
+            save_command(step_text, fixed_command, "blocked")
             return False, command, "failed", run_result
 
         if retry_info["kind"] != info["kind"]:

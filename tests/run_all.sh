@@ -27,6 +27,7 @@ echo "========================================"
 
 run_test "core compile" "./tests/test_compile_core.sh"
 run_test "execution context" "python3 tests/test_execution_context.py"
+run_test "retry command guards" "python3 tests/test_retry_command_guards.py"
 run_test "file renamer behavior" "./tests/test_file_renamer_behavior.sh"
 run_test "context edit routing" "./tests/test_context_edit_routing.sh"
 run_test "function edit guards" "./tests/test_function_edit_guards.sh"
