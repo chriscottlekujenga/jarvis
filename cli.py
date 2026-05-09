@@ -1,4 +1,5 @@
 import os
+import subprocess
 import re
 import json
 import shutil
@@ -2223,6 +2224,80 @@ def is_context_info_request(request):
     return any(term in lowered for term in info_terms)
 
 
+
+def sanitize_project_name(name):
+    cleaned = re.sub(r"[^a-zA-Z0-9_-]+", "_", name.strip().lower()).strip("_")
+    cleaned = re.sub(r"_+", "_", cleaned)
+    return cleaned
+
+
+def get_default_projects_root():
+    return "/home/chris/projects"
+
+
+def create_project(project_name, projects_root=None):
+    clean_name = sanitize_project_name(project_name)
+    if not clean_name:
+        return False, "Project name is required."
+
+    projects_root = projects_root or get_default_projects_root()
+    project_root = os.path.abspath(os.path.join(projects_root, clean_name))
+    app_root = os.path.abspath(get_app_root())
+
+    if project_root == app_root or project_root.startswith(app_root + os.sep):
+        return False, f"Refusing to create user project inside Jarvis core: {project_root}"
+
+    os.makedirs(project_root, exist_ok=True)
+
+    main_script_name = "app.py"
+    main_script = os.path.join(project_root, main_script_name)
+    readme_path = os.path.join(project_root, "README.md")
+
+    if not os.path.exists(main_script):
+        write_file_text(main_script, 'def main():\n    print("Hello from Jarvis project")\n\n\nif __name__ == "__main__":\n    main()\n')
+
+    if not os.path.exists(readme_path):
+        write_file_text(readme_path, f"# {clean_name}\n\nCreated by Jarvis.\n")
+
+    git_dir = os.path.join(project_root, ".git")
+    if not os.path.isdir(git_dir):
+        result = subprocess.run(
+            ["git", "init"],
+            cwd=project_root,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        if result.returncode != 0:
+            return False, result.stderr.strip() or "git init failed"
+
+    compile_result = subprocess.run(
+        ["python3", "-m", "py_compile", main_script_name],
+        cwd=project_root,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    if compile_result.returncode != 0:
+        return False, compile_result.stderr.strip() or "initial project validation failed"
+
+    set_project_state("project_root", project_root)
+    set_project_state("main_script_name", main_script_name)
+    set_project_state("main_script", main_script)
+    set_current_dir(project_root)
+
+    return True, f"Created project: {project_root}"
+
+
+def create_project_mode(project_name):
+    ok, message = create_project(project_name)
+    print(message)
+    if not ok:
+        print("[FAILED]")
+        return
+    print("[OK]")
+
+
 def context_mode(request=None):
     if not request:
         request = input("Enter request: ").strip()
@@ -2613,6 +2688,7 @@ Commands:
   planner                Generate and show a plan
   plan <goal>            Generate and show a plan for a goal
   build <goal>           Generate a plan and execute it
+  create project <name> Create a new user app project outside Jarvis core
   skills                 List saved skills
   saveskill              Save a skill
   viewskill <name>       Show a saved skill
@@ -2663,6 +2739,9 @@ def main():
 
         elif user_input.startswith("build "):
             build_mode(user_input[6:].strip())
+
+        elif user_input.startswith("create project "):
+            create_project_mode(user_input[len("create project "):].strip())
 
         elif user_input == "skills":
             skills_mode()
