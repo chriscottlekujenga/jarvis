@@ -2383,6 +2383,13 @@ def get_default_projects_root():
     return "/home/chris/projects"
 
 
+def infer_project_type_from_main_script(main_script_name):
+    name = (main_script_name or "").strip().lower()
+    if name in {"index.html", "index.htm"} or name.endswith((".html", ".htm")):
+        return "web"
+    return "python"
+
+
 def create_project(project_name, projects_root=None, project_type="python"):
     clean_name = sanitize_project_name(project_name)
     if not clean_name:
@@ -2977,11 +2984,13 @@ def main():
                 print("Usage: setcontext <project_root> <main_script_name>")
             else:
                 project_root, main_script_name = parts
+                project_type = infer_project_type_from_main_script(main_script_name)
                 set_project_state("project_root", project_root)
+                set_project_state("project_type", project_type)
                 set_project_state("main_script_name", main_script_name)
                 set_project_state("main_script", os.path.join(project_root, main_script_name))
                 set_current_dir(project_root)
-                print(f"Context set: project_root={project_root}, main_script_name={main_script_name}")
+                print(f"Context set: project_root={project_root}, main_script_name={main_script_name}, project_type={project_type}")
 
         elif user_input == "pwd":
             cmd = "pwd"

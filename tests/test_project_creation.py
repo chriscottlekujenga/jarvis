@@ -196,3 +196,12 @@ def test_run_project_script_fallback_fails_for_broken_web_project():
 
 
 print("PASS: project creation flow")
+
+def test_infer_project_type_from_main_script_detects_web():
+    assert cli.infer_project_type_from_main_script("index.html") == "web"
+    assert cli.infer_project_type_from_main_script("site.htm") == "web"
+
+
+def test_infer_project_type_from_main_script_defaults_to_python():
+    assert cli.infer_project_type_from_main_script("app.py") == "python"
+    assert cli.infer_project_type_from_main_script("rename_files.py") == "python"
