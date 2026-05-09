@@ -119,3 +119,43 @@ def test_run_command_capture_accepts_env():
 
     assert captured["env"] == fake_env
 \n
+
+
+def test_route_web_edit_target_uses_request_text_for_css(monkeypatch):
+    monkeypatch.setattr(cli, "get_project_state", lambda key: {
+        "project_type": "web",
+        "project_root": "/tmp/example_web",
+    }.get(key, ""))
+
+    assert cli.route_web_edit_target_from_text(
+        "edit /tmp/example_web/index.html to add inline body styles",
+        "add inline body styles",
+        "continue edit styles.css to change the page background color and spacing",
+    ) == "/tmp/example_web/styles.css"
+
+
+def test_route_web_edit_target_uses_request_text_for_javascript(monkeypatch):
+    monkeypatch.setattr(cli, "get_project_state", lambda key: {
+        "project_type": "web",
+        "project_root": "/tmp/example_web",
+    }.get(key, ""))
+
+    assert cli.route_web_edit_target_from_text(
+        "edit /tmp/example_web/index.html to add button behavior",
+        "add button behavior",
+        "continue edit script.js to add a click alert",
+    ) == "/tmp/example_web/script.js"
+
+
+def test_route_web_edit_target_ignores_python_project(monkeypatch):
+    monkeypatch.setattr(cli, "get_project_state", lambda key: {
+        "project_type": "python",
+        "project_root": "/tmp/example_python",
+    }.get(key, ""))
+
+    assert cli.route_web_edit_target_from_text(
+        "edit app.py to change button color",
+        "change button color",
+        "continue change button color",
+    ) == ""
+

@@ -673,6 +673,32 @@ def infer_jarvis_target_file(text):
     return None
 
 
+
+def route_web_edit_target_from_text(step_text="", instruction_text="", request_text=""):
+    project_type = get_project_state("project_type")
+    project_root = get_project_state("project_root")
+
+    if project_type != "web" or not project_root:
+        return ""
+
+    combined = " ".join([
+        request_text or "",
+        step_text or "",
+        instruction_text or "",
+    ])
+
+    css_pattern = r"\b(styles\.css|css|style|styles|color|layout|font|spacing|responsive|background)\b"
+    js_pattern = r"\b(script\.js|javascript|js|click|button|event|alert|interactive|interaction)\b"
+
+    if re.search(css_pattern, combined, re.IGNORECASE):
+        return os.path.join(project_root, "styles.css")
+
+    if re.search(js_pattern, combined, re.IGNORECASE):
+        return os.path.join(project_root, "script.js")
+
+    return ""
+
+
 def normalize_context_steps(steps, request_text=""):
     main_script = get_project_state("main_script") or get_project_state("main_script_name")
     normalized = []
@@ -738,6 +764,11 @@ def normalize_context_steps(steps, request_text=""):
                         instruction = instruction[len(prefix):].strip()
                         break
 
+            routed_web_target = route_web_edit_target_from_text(s, instruction, request_text)
+            if routed_web_target:
+                normalized.append(f"edit {routed_web_target} to {instruction}")
+                continue
+
             # 🔴 FORCE explicit file if user named one
             if explicit_target_base:
                 target_path = resolve_edit_file_path(explicit_target_base)
@@ -786,15 +817,6 @@ def normalize_context_steps(steps, request_text=""):
                 continue
 
             normalized.append(s)
-
-        # Route requests to styles.css or script.js based on keywords
-        if re.search(r'\b(css|style|color|layout|font|spacing|responsive)\b', instruction, re.IGNORECASE):
-            target_path = os.path.join(get_project_state("project_root"), "styles.css")
-        elif re.search(r'\b(javascript|js|click|button behavior|event|alert|interactive behavior)\b', instruction, re.IGNORECASE):
-            target_path = os.path.join(get_project_state("project_root"), "script.js")
-
-        if 'target_path' in locals():
-            normalized.append(f"edit {target_path} to {instruction}")
 
     return normalized
 def get_main_script_path():
