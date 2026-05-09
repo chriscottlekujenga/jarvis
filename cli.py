@@ -2281,6 +2281,35 @@ def create_project(project_name, projects_root=None):
     if compile_result.returncode != 0:
         return False, compile_result.stderr.strip() or "initial project validation failed"
 
+    commit_check = subprocess.run(
+        ["git", "rev-parse", "--verify", "HEAD"],
+        cwd=project_root,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+
+    if commit_check.returncode != 0:
+        add_result = subprocess.run(
+            ["git", "add", "."],
+            cwd=project_root,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        if add_result.returncode != 0:
+            return False, add_result.stderr.strip() or "git add failed"
+
+        commit_result = subprocess.run(
+            ["git", "commit", "-m", "initial project scaffold"],
+            cwd=project_root,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        if commit_result.returncode != 0:
+            return False, commit_result.stderr.strip() or "initial project commit failed"
+
     set_project_state("project_root", project_root)
     set_project_state("main_script_name", main_script_name)
     set_project_state("main_script", main_script)

@@ -35,6 +35,25 @@ def test_create_project_creates_external_git_repo_and_updates_context():
         assert os.path.exists(main_script)
         assert not os.path.abspath(project_root).startswith(os.path.abspath(APP_ROOT) + os.sep)
 
+        commit_check = subprocess.run(
+            ["git", "rev-parse", "--verify", "HEAD"],
+            cwd=project_root,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        assert commit_check.returncode == 0, commit_check.stderr
+
+        status_check = subprocess.run(
+            ["git", "status", "--short"],
+            cwd=project_root,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        assert status_check.returncode == 0, status_check.stderr
+        assert status_check.stdout.strip() == ""
+
         assert cli.get_project_state("project_root") == project_root
         assert cli.get_project_state("main_script_name") == "app.py"
         assert cli.get_project_state("main_script") == main_script
