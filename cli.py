@@ -899,7 +899,8 @@ def extract_requested_heading_text(instruction):
 
     patterns = [
         r'heading\s+(?:to say|to read|text to|from .*? to)\s+["\'](.+?)["\']',
-        r'<h1>\s*tags?\s+to\s+["\'](.+?)["\']',
+        r'(?:content|text)\s+(?:of|inside)\s+the\s+<h1>\s+tag\s+to\s+["\'](.+?)["\']',
+        r'<h1>\s+tags?\s+to\s+["\'](.+?)["\']',
         r'h1\s+(?:to say|to read|text to)\s+["\'](.+?)["\']',
     ]
 
@@ -1779,12 +1780,12 @@ def run_edit(step):
             new += "\n"
     elif os.path.splitext(file_path)[1].lower() in {".html", ".htm"}:
         deterministic_new = deterministic_html_h1_edit(old, instruction)
-        if deterministic_new is None:
-            print("[FUNCTION] none inferred, using full-file fallback")
-            new = ask_llm_edit(file_path, old, instruction)
-        else:
+        if isinstance(deterministic_new, str):
             print("[DETERMINISTIC EDIT] html h1 replacement")
             new = deterministic_new
+        else:
+            print("[FUNCTION] none inferred, using full-file fallback")
+            new = ask_llm_edit(file_path, old, instruction)
     elif (
         re.search(r'change the string from ["\\\'](.+?)["\\\'] to ["\\\'](.+?)["\\\']', instruction, re.IGNORECASE)
         or re.search(r'change the string ["\\\'](.+?)["\\\'] to ["\\\'](.+?)["\\\']', instruction, re.IGNORECASE)
@@ -1889,6 +1890,9 @@ def run_edit(step):
             new = restore_unrelated_cli_functions(old, new, instruction)
 
     new = strip_model_edit_artifacts(new, file_path)
+
+    if new is None:
+        return record_edit_failure("empty_edit_output", "Rejected: edit produced no file content")
 
     if os.path.basename(file_path) == "cli.py" and target_function != "main":
         new = sanitize_cli_entrypoint(old, new, instruction)
