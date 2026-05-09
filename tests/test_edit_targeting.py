@@ -49,3 +49,33 @@ def test_context_step_without_self_request_targets_project_main_script():
 
 
 print("PASS: edit targeting guards")
+
+
+def test_project_request_ignores_llm_chosen_core_file():
+    setup_context()
+    steps = ["edit cli.py to add logging.basicConfig after imports"]
+    normalized = cli.normalize_context_steps(steps, "add logging to the app")
+    assert normalized
+    assert normalized[0].startswith(f"edit {PROJECT_ROOT}/rename_files.py to ")
+
+
+def test_jarvis_self_request_can_target_core_file():
+    setup_context()
+    steps = ["edit cli.py to improve retry logic"]
+    normalized = cli.normalize_context_steps(steps, "improve Jarvis retry logic")
+    assert normalized == [f"edit {APP_ROOT}/cli.py to improve retry logic"]
+
+
+def test_explicit_project_file_request_targets_project_even_in_context_mode():
+    setup_context()
+    steps = ["edit rename_files.py to add logging.basicConfig after imports"]
+    normalized = cli.normalize_context_steps(steps, "change rename_files.py to add logging")
+    assert normalized
+    assert normalized[0].startswith(f"edit {PROJECT_ROOT}/rename_files.py to ")
+
+
+def test_explicit_core_file_request_targets_core_even_from_project_context():
+    setup_context()
+    steps = ["edit cli.py to change help output text"]
+    normalized = cli.normalize_context_steps(steps, "change cli.py help output text")
+    assert normalized == [f"edit {APP_ROOT}/cli.py to change help output text"]
