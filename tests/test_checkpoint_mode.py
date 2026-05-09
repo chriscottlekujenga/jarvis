@@ -216,3 +216,28 @@ def test_cleanup_successful_edit_backup_ignores_missing_file(tmp_path):
 
     assert message == ""
 
+
+def test_commit_checkpoint_mode_accepts_inline_message(monkeypatch):
+    calls = []
+
+    monkeypatch.setattr(cli, "get_git_dirty_files", lambda: (["cli.py"], ""))
+    monkeypatch.setattr(cli, "parse_checkpoint_file_selection", lambda dirty, selection: (dirty, ""))
+    monkeypatch.setattr(cli, "run_core_validation_for_dirty_files", lambda dirty: (True, "ALL TESTS PASSED\n"))
+
+    inputs = iter(["all", "y"])
+    monkeypatch.setattr("builtins.input", lambda prompt="": next(inputs))
+
+    def fake_run_command_capture(args, cwd=None, env=None):
+        calls.append(args)
+        return type("Result", (), {
+            "returncode": 0,
+            "stdout": "",
+            "stderr": "",
+        })()
+
+    monkeypatch.setattr(cli, "run_command_capture", fake_run_command_capture)
+
+    cli.commit_checkpoint_mode("inline commit message")
+
+    assert ["git", "commit", "-m", "inline commit message"] in calls
+

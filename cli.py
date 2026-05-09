@@ -2669,7 +2669,9 @@ def parse_checkpoint_file_selection(dirty_files, selection_text):
     return selected, ""
 
 
-def commit_checkpoint_mode():
+def commit_checkpoint_mode(inline_message=""):
+    inline_message = (inline_message or "").strip()
+
     dirty_files, error = get_git_dirty_files()
     if dirty_files is None:
         print(error)
@@ -2715,7 +2717,10 @@ def commit_checkpoint_mode():
         print("[STOPPED] validation failed; nothing committed")
         return
 
-    message = input("Commit message > ").strip()
+    message = inline_message
+    if not message:
+        message = input("Commit message > ").strip()
+
     if not message:
         print("[STOPPED] commit message required")
         return
@@ -3233,8 +3238,14 @@ def main():
             clear_project_state()
             print("Project state cleared.")
 
-        elif user_input in {"commit checkpoint", "checkpoint commit"}:
+        elif user_input == "commit checkpoint" or user_input == "checkpoint commit":
             commit_checkpoint_mode()
+
+        elif user_input.startswith("commit checkpoint "):
+            commit_checkpoint_mode(user_input[len("commit checkpoint "):].strip())
+
+        elif user_input.startswith("checkpoint commit "):
+            commit_checkpoint_mode(user_input[len("checkpoint commit "):].strip())
 
         elif user_input.startswith("setcontext "):
             parts = user_input[len("setcontext "):].strip().split()
