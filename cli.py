@@ -2235,10 +2235,14 @@ def get_default_projects_root():
     return "/home/chris/projects"
 
 
-def create_project(project_name, projects_root=None):
+def create_project(project_name, projects_root=None, project_type="python"):
     clean_name = sanitize_project_name(project_name)
     if not clean_name:
         return False, "Project name is required."
+
+    project_type = (project_type or "python").strip().lower()
+    if project_type not in {"python", "web"}:
+        return False, f"Unsupported project type: {project_type}"
 
     projects_root = projects_root or get_default_projects_root()
     project_root = os.path.abspath(os.path.join(projects_root, clean_name))
@@ -2249,15 +2253,29 @@ def create_project(project_name, projects_root=None):
 
     os.makedirs(project_root, exist_ok=True)
 
-    main_script_name = "app.py"
-    main_script = os.path.join(project_root, main_script_name)
     readme_path = os.path.join(project_root, "README.md")
 
-    if not os.path.exists(main_script):
-        write_file_text(main_script, 'def main():\n    print("Hello from Jarvis project")\n\n\nif __name__ == "__main__":\n    main()\n')
+    if project_type == "python":
+        main_script_name = "app.py"
+        main_script = os.path.join(project_root, main_script_name)
+        if not os.path.exists(main_script):
+            write_file_text(main_script, 'def main():\n    print("Hello from Jarvis project")\n\n\nif __name__ == "__main__":\n    main()\n')
+    else:
+        main_script_name = "index.html"
+        main_script = os.path.join(project_root, main_script_name)
+        index_path = main_script
+        styles_path = os.path.join(project_root, "styles.css")
+        script_path = os.path.join(project_root, "script.js")
+
+        if not os.path.exists(index_path):
+            write_file_text(index_path, '<!doctype html>\n<html lang="en">\n<head>\n  <meta charset="utf-8">\n  <meta name="viewport" content="width=device-width, initial-scale=1">\n  <title>Jarvis Web Project</title>\n  <link rel="stylesheet" href="styles.css">\n</head>\n<body>\n  <main>\n    <h1>Hello from Jarvis</h1>\n  </main>\n  <script src="script.js"></script>\n</body>\n</html>\n')
+        if not os.path.exists(styles_path):
+            write_file_text(styles_path, 'body {\n  font-family: system-ui, sans-serif;\n  margin: 2rem;\n}\n')
+        if not os.path.exists(script_path):
+            write_file_text(script_path, 'console.log("Jarvis web project ready");\n')
 
     if not os.path.exists(readme_path):
-        write_file_text(readme_path, f"# {clean_name}\n\nCreated by Jarvis.\n")
+        write_file_text(readme_path, f"# {clean_name}\n\nCreated by Jarvis as a {project_type} project.\n")
 
     git_dir = os.path.join(project_root, ".git")
     if not os.path.isdir(git_dir):
@@ -2271,15 +2289,16 @@ def create_project(project_name, projects_root=None):
         if result.returncode != 0:
             return False, result.stderr.strip() or "git init failed"
 
-    compile_result = subprocess.run(
-        ["python3", "-m", "py_compile", main_script_name],
-        cwd=project_root,
-        text=True,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-    )
-    if compile_result.returncode != 0:
-        return False, compile_result.stderr.strip() or "initial project validation failed"
+    if project_type == "python":
+        compile_result = subprocess.run(
+            ["python3", "-m", "py_compile", main_script_name],
+            cwd=project_root,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        if compile_result.returncode != 0:
+            return False, compile_result.stderr.strip() or "initial project validation failed"
 
     commit_check = subprocess.run(
         ["git", "rev-parse", "--verify", "HEAD"],
@@ -2311,15 +2330,16 @@ def create_project(project_name, projects_root=None):
             return False, commit_result.stderr.strip() or "initial project commit failed"
 
     set_project_state("project_root", project_root)
+    set_project_state("project_type", project_type)
     set_project_state("main_script_name", main_script_name)
     set_project_state("main_script", main_script)
     set_current_dir(project_root)
 
-    return True, f"Created project: {project_root}"
+    return True, f"Created {project_type} project: {project_root}"
 
 
-def create_project_mode(project_name):
-    ok, message = create_project(project_name)
+def create_project_mode(project_name, project_type="python"):
+    ok, message = create_project(project_name, project_type=project_type)
     print(message)
     if not ok:
         print("[FAILED]")
@@ -2717,7 +2737,9 @@ Commands:
   planner                Generate and show a plan
   plan <goal>            Generate and show a plan for a goal
   build <goal>           Generate a plan and execute it
-  create project <name> Create a new user app project outside Jarvis core
+  create project <name> Create a new Python user app project outside Jarvis core
+  create python project <name> Create a new Python user app project
+  create web project <name> Create a new web project
   skills                 List saved skills
   saveskill              Save a skill
   viewskill <name>       Show a saved skill
@@ -2769,8 +2791,14 @@ def main():
         elif user_input.startswith("build "):
             build_mode(user_input[6:].strip())
 
+        elif user_input.startswith("create python project "):
+            create_project_mode(user_input[len("create python project "):].strip(), project_type="python")
+
+        elif user_input.startswith("create web project "):
+            create_project_mode(user_input[len("create web project "):].strip(), project_type="web")
+
         elif user_input.startswith("create project "):
-            create_project_mode(user_input[len("create project "):].strip())
+            create_project_mode(user_input[len("create project "):].strip(), project_type="python")
 
         elif user_input == "skills":
             skills_mode()

@@ -69,6 +69,52 @@ def test_create_project_creates_external_git_repo_and_updates_context():
         assert result.returncode == 0, result.stderr
 
 
+def test_create_web_project_creates_web_files_without_python_compile_requirement():
+    with tempfile.TemporaryDirectory() as tmp:
+        ok, message = cli.create_project("Web App", projects_root=tmp, project_type="web")
+        assert ok, message
+
+        project_root = os.path.join(tmp, "web_app")
+        index_path = os.path.join(project_root, "index.html")
+
+        assert os.path.exists(index_path)
+        assert os.path.exists(os.path.join(project_root, "styles.css"))
+        assert os.path.exists(os.path.join(project_root, "script.js"))
+        assert os.path.exists(os.path.join(project_root, "README.md"))
+        assert not os.path.exists(os.path.join(project_root, "app.py"))
+
+        assert cli.get_project_state("project_root") == project_root
+        assert cli.get_project_state("project_type") == "web"
+        assert cli.get_project_state("main_script_name") == "index.html"
+        assert cli.get_project_state("main_script") == index_path
+
+        commit_check = subprocess.run(
+            ["git", "rev-parse", "--verify", "HEAD"],
+            cwd=project_root,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        assert commit_check.returncode == 0, commit_check.stderr
+
+        status_check = subprocess.run(
+            ["git", "status", "--short"],
+            cwd=project_root,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        assert status_check.returncode == 0, status_check.stderr
+        assert status_check.stdout.strip() == ""
+
+
+def test_create_project_rejects_unknown_project_type():
+    with tempfile.TemporaryDirectory() as tmp:
+        ok, message = cli.create_project("Bad Type", projects_root=tmp, project_type="mobile")
+        assert not ok
+        assert "Unsupported project type" in message
+
+
 def test_create_project_rejects_projects_inside_jarvis_core():
     ok, message = cli.create_project("bad_app", projects_root=APP_ROOT)
     assert not ok
