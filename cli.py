@@ -2402,6 +2402,40 @@ def run_project_script():
     shutil.rmtree(temp_root, ignore_errors=True)
     return success
 
+
+
+def edit_step_target_path(step):
+    if not is_edit_step(step):
+        return ""
+
+    head = step.split(" to ", 1)[0]
+    return head[len("edit "):].strip()
+
+
+def plan_targets_jarvis_core(steps):
+    for step in steps or []:
+        target_path = edit_step_target_path(step)
+        if target_path and is_jarvis_core_file(target_path):
+            return True
+
+    return False
+
+
+def validate_jarvis_core_after_plan(steps):
+    dirty_paths = []
+
+    for step in steps or []:
+        target_path = edit_step_target_path(step)
+        if target_path and is_jarvis_core_file(target_path):
+            dirty_paths.append(os.path.relpath(os.path.abspath(target_path), get_app_root()))
+
+    ok, output = run_core_validation_for_dirty_files(dirty_paths)
+    if output:
+        print(output.rstrip())
+
+    return ok
+
+
 def execute_plan(steps, retry_depth=0):
     for step in steps:
         print(f"\n=== {step} ===")
@@ -2423,8 +2457,12 @@ def execute_plan(steps, retry_depth=0):
     print("\n[SUCCESS] plan complete")
 
     if any(is_edit_step(s) for s in steps):
-        print("\n[AUTO-RUN] executing project for validation")
-        auto_ok = run_project_script()
+        if plan_targets_jarvis_core(steps):
+            print("\n[AUTO-RUN] validating Jarvis core")
+            auto_ok = validate_jarvis_core_after_plan(steps)
+        else:
+            print("\n[AUTO-RUN] executing project for validation")
+            auto_ok = run_project_script()
         if not auto_ok:
             print("\n[RETRY] auto-run failed, attempting correction")
 

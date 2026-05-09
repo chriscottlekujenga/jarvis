@@ -290,3 +290,15 @@ def test_normalize_context_steps_drops_bad_validation_steps(monkeypatch):
         "bash tests/run_all.sh",
     ]
 
+
+def test_plan_targets_jarvis_core_detects_core_edit():
+    assert cli.plan_targets_jarvis_core([
+        "edit /home/chris/jarvis/cli.py to add stricter validation",
+    ])
+
+
+def test_plan_targets_jarvis_core_ignores_project_edit():
+    assert not cli.plan_targets_jarvis_core([
+        "edit /home/chris/jarvis/file_renamer/rename_files.py to add logging",
+    ])
+
