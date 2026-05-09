@@ -95,3 +95,23 @@ def test_context_normalization_keeps_simple_safe_shell_step():
     normalized = cli.normalize_context_steps(steps, "list files")
     assert normalized == ["ls"]
 
+def test_strip_model_edit_artifacts_removes_html_language_label():
+    raw = "html\n<!doctype html>\n<html>\n</html>\n"
+    cleaned = cli.strip_model_edit_artifacts(raw, "/tmp/index.html")
+    assert cleaned.startswith("<!doctype html>")
+    assert not cleaned.startswith("html\n")
+
+
+def test_strip_model_edit_artifacts_removes_code_fence_and_language_label():
+    raw = "```html\n<!doctype html>\n<html>\n</html>\n```"
+    cleaned = cli.strip_model_edit_artifacts(raw, "/tmp/index.html")
+    assert cleaned.startswith("<!doctype html>")
+    assert "```" not in cleaned
+    assert not cleaned.startswith("html\n")
+
+
+def test_strip_model_edit_artifacts_does_not_remove_real_html_tag():
+    raw = "<html>\n<body></body>\n</html>\n"
+    cleaned = cli.strip_model_edit_artifacts(raw, "/tmp/index.html")
+    assert cleaned == raw
+

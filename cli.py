@@ -890,6 +890,42 @@ def instruction_mentions_entrypoint(instruction):
     return any(keyword in lowered for keyword in entry_keywords)
 
 
+def strip_model_edit_artifacts(text, file_path=""):
+    if text is None:
+        return text
+
+    cleaned = text.strip()
+
+    if cleaned.startswith("```"):
+        lines = cleaned.splitlines()
+        if lines and lines[0].strip().startswith("```"):
+            lines = lines[1:]
+        if lines and lines[-1].strip() == "```":
+            lines = lines[:-1]
+        cleaned = "\n".join(lines).strip()
+
+    extension = os.path.splitext(file_path or "")[1].lower()
+    language_labels = {
+        ".html": {"html"},
+        ".css": {"css"},
+        ".js": {"javascript", "js"},
+        ".py": {"python", "py"},
+        ".json": {"json"},
+        ".md": {"markdown", "md"},
+    }
+
+    labels = language_labels.get(extension, set())
+    lines = cleaned.splitlines()
+
+    if lines and lines[0].strip().lower() in labels:
+        cleaned = "\n".join(lines[1:]).lstrip("\n")
+
+    if text.endswith("\n") and not cleaned.endswith("\n"):
+        cleaned += "\n"
+
+    return cleaned
+
+
 def sanitize_cli_entrypoint(old_text, new_text, instruction):
     old_block = extract_main_entrypoint_block(old_text)
     new_block = extract_main_entrypoint_block(new_text)
@@ -1806,6 +1842,8 @@ def run_edit(step):
 
         if os.path.basename(file_path) == "cli.py":
             new = restore_unrelated_cli_functions(old, new, instruction)
+
+    new = strip_model_edit_artifacts(new, file_path)
 
     if os.path.basename(file_path) == "cli.py" and target_function != "main":
         new = sanitize_cli_entrypoint(old, new, instruction)
