@@ -139,3 +139,18 @@ def test_deterministic_html_h1_edit_returns_none_without_h1():
         'change the heading to say "Welcome Home"',
     ) is None
 
+def test_extract_requested_heading_text_from_h1_content_instruction():
+    assert cli.extract_requested_heading_text(
+        'change the content of the <h1> tag to "Welcome to Test Web Epsilon"'
+    ) == "Welcome to Test Web Epsilon"
+
+
+def test_deterministic_html_h1_edit_handles_h1_content_instruction():
+    old = "<!doctype html>\n<h1>Hello from Jarvis</h1>\n"
+    new = cli.deterministic_html_h1_edit(
+        old,
+        'change the content of the <h1> tag to "Welcome to Test Web Epsilon"',
+    )
+    assert new is not None
+    assert "<h1>Welcome to Test Web Epsilon</h1>" in new
+

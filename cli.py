@@ -1777,9 +1777,14 @@ def run_edit(step):
         new = "\n".join(lines)
         if old.endswith("\n"):
             new += "\n"
-    elif os.path.splitext(file_path)[1].lower() in {".html", ".htm"} and deterministic_html_h1_edit(old, instruction):
-        print("[DETERMINISTIC EDIT] html h1 replacement")
-        new = deterministic_html_h1_edit(old, instruction)
+    elif os.path.splitext(file_path)[1].lower() in {".html", ".htm"}:
+        deterministic_new = deterministic_html_h1_edit(old, instruction)
+        if deterministic_new is None:
+            print("[FUNCTION] none inferred, using full-file fallback")
+            new = ask_llm_edit(file_path, old, instruction)
+        else:
+            print("[DETERMINISTIC EDIT] html h1 replacement")
+            new = deterministic_new
     elif (
         re.search(r'change the string from ["\\\'](.+?)["\\\'] to ["\\\'](.+?)["\\\']', instruction, re.IGNORECASE)
         or re.search(r'change the string ["\\\'](.+?)["\\\'] to ["\\\'](.+?)["\\\']', instruction, re.IGNORECASE)
@@ -1892,9 +1897,10 @@ def run_edit(step):
 
     if not is_valid_python:
         return record_edit_failure("python_compile_failed", f"Rejected: python compile failed after edit: {python_error}")
-    undefined_constants = has_undefined_constants(new, old)
-    if undefined_constants:
-        return record_edit_failure("undefined_constants", f"Rejected: undefined constants introduced: {undefined_constants}")
+    if os.path.splitext(file_path)[1].lower() == ".py":
+        undefined_constants = has_undefined_constants(new, old)
+        if undefined_constants:
+            return record_edit_failure("undefined_constants", f"Rejected: undefined constants introduced: {undefined_constants}")
 
     changed_lines, diff_ratio = calculate_diff_stats(old, new)
 
