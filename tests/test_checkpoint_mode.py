@@ -100,4 +100,22 @@ def test_commit_checkpoint_validates_with_all_dirty_files_but_stages_selected_fi
     assert "CHECKPOINT_SMOKE.txt" in dirty_files
     assert "CHECKPOINT_SMOKE.txt" not in selected_files
     assert cli.build_allowed_dirty_path_pattern(dirty_files) == "(CHECKPOINT_SMOKE\\.txt|README\\.md)"
+\n\n
+
+def test_run_command_capture_accepts_env():
+    fake_env = {"JARVIS_ALLOWED_DIRTY_PATH": "README\\.md"}
+    captured = {}
+
+    def fake_subprocess_run(args, cwd=None, text=None, stdout=None, stderr=None, env=None):
+        captured["env"] = env
+        return type("Result", (), {
+            "returncode": 0,
+            "stdout": "",
+            "stderr": "",
+        })()
+
+    with patch("cli.subprocess.run", side_effect=fake_subprocess_run):
+        cli.run_command_capture(["git", "status"], env=fake_env)
+
+    assert captured["env"] == fake_env
 \n

@@ -2508,13 +2508,14 @@ def build_allowed_dirty_path_pattern(paths):
     return "(" + "|".join(escaped) + ")"
 
 
-def run_command_capture(args, cwd=None):
+def run_command_capture(args, cwd=None, env=None):
     return subprocess.run(
         args,
         cwd=cwd or get_app_root(),
         text=True,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
+        env=env,
     )
 
 
@@ -2655,7 +2656,12 @@ def commit_checkpoint_mode():
         print("[FAILED]")
         return
 
-    commit_result = run_command_capture(["git", "commit", "-m", message])
+    commit_env = os.environ.copy()
+    allowed_pattern = build_allowed_dirty_path_pattern(dirty_files)
+    if allowed_pattern:
+        commit_env["JARVIS_ALLOWED_DIRTY_PATH"] = allowed_pattern
+
+    commit_result = run_command_capture(["git", "commit", "-m", message], env=commit_env)
     print((commit_result.stdout + commit_result.stderr).rstrip())
     if commit_result.returncode != 0:
         print("[FAILED]")
