@@ -900,6 +900,7 @@ def extract_requested_heading_text(instruction):
     patterns = [
         r'heading\s+(?:to say|to read|text to|from .*? to)\s+["\'](.+?)["\']',
         r'(?:content|text)\s+(?:of|inside)\s+the\s+<h1>\s+tags?\s+(?:from\s+["\'].+?["\']\s+)?to\s+["\'](.+?)["\']',
+        r'text\s+of\s+the\s+first\s+<h1>\s+tag\s+to\s+["\'](.+?)["\']',
         r'<h1>\s+tags?\s+to\s+["\'](.+?)["\']',
         r'h1\s+(?:to say|to read|text to)\s+["\'](.+?)["\']',
     ]
@@ -931,6 +932,9 @@ def deterministic_html_h1_edit(old_text, instruction):
     )
 
 
+def strip_model_edit_artifacts(text, file_path=""):
+    if text is None:
+        return text
 
     cleaned = text.strip()
 

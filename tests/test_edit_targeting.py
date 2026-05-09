@@ -184,3 +184,24 @@ def test_deterministic_html_h1_edit_handles_text_inside_h1_tags_from_to_instruct
     assert isinstance(new, str)
     assert "<h1>Welcome to Test Web Epsilon</h1>" in new
 
+def test_extract_requested_heading_text_from_first_h1_instruction():
+    assert cli.extract_requested_heading_text(
+        'change the text of the first <h1> tag to "Welcome to Test Web Epsilon"'
+    ) == "Welcome to Test Web Epsilon"
+
+
+def test_deterministic_html_h1_edit_handles_first_h1_instruction():
+    old = "<!doctype html>\n<h1>Hello from Jarvis</h1>\n"
+    new = cli.deterministic_html_h1_edit(
+        old,
+        'change the text of the first <h1> tag to "Welcome to Test Web Epsilon"',
+    )
+    assert isinstance(new, str)
+    assert "<h1>Welcome to Test Web Epsilon</h1>" in new
+
+
+def test_strip_model_edit_artifacts_still_available_after_heading_helpers():
+    raw = "html\n<!doctype html>\n<html>\n</html>\n"
+    cleaned = cli.strip_model_edit_artifacts(raw, "/tmp/index.html")
+    assert cleaned.startswith("<!doctype html>")
+
