@@ -91,4 +91,13 @@ def test_parse_checkpoint_file_selection_rejects_out_of_range():
     selected, error = cli.parse_checkpoint_file_selection(["cli.py"], "2")
     assert selected is None
     assert "out of range" in error
+\n\n
+
+def test_commit_checkpoint_validates_with_all_dirty_files_but_stages_selected_files():
+    dirty_files = ["CHECKPOINT_SMOKE.txt", "README.md"]
+    selected_files = ["README.md"]
+
+    assert "CHECKPOINT_SMOKE.txt" in dirty_files
+    assert "CHECKPOINT_SMOKE.txt" not in selected_files
+    assert cli.build_allowed_dirty_path_pattern(dirty_files) == "(CHECKPOINT_SMOKE\\.txt|README\\.md)"
 \n

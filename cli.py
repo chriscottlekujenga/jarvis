@@ -2632,7 +2632,7 @@ def commit_checkpoint_mode():
         print(f"- {path}")
 
     print("\n[VALIDATION]")
-    ok, output = run_core_validation_for_dirty_files(selected_files)
+    ok, output = run_core_validation_for_dirty_files(dirty_files)
     print(output.rstrip())
 
     if not ok:
