@@ -2562,6 +2562,37 @@ def run_core_validation_for_dirty_files(dirty_files):
     return True, test_result.stdout + test_result.stderr
 
 
+def parse_checkpoint_file_selection(dirty_files, selection_text):
+    dirty_files = list(dirty_files or [])
+    selection = (selection_text or "").strip().lower()
+
+    if selection in {"cancel", "c", "no", "n"}:
+        return [], ""
+
+    if selection in {"all", "a", ""}:
+        return dirty_files, ""
+
+    raw_parts = selection.replace(",", " ").split()
+    selected = []
+    seen_indexes = set()
+
+    for raw in raw_parts:
+        if not raw.isdigit():
+            return None, f"Invalid file selection: {raw}"
+
+        index = int(raw)
+        if index < 1 or index > len(dirty_files):
+            return None, f"File selection out of range: {index}"
+
+        if index in seen_indexes:
+            continue
+
+        seen_indexes.add(index)
+        selected.append(dirty_files[index - 1])
+
+    return selected, ""
+
+
 def commit_checkpoint_mode():
     dirty_files, error = get_git_dirty_files()
     if dirty_files is None:
@@ -2574,11 +2605,34 @@ def commit_checkpoint_mode():
         return
 
     print("\n[DIRTY FILES]")
-    for path in dirty_files:
+    for index, path in enumerate(dirty_files, start=1):
+        print(f"{index}. {path}")
+
+    selection = input('Files to include? Enter numbers, "all", or "cancel" > ').strip()
+    selected_files, selection_error = parse_checkpoint_file_selection(dirty_files, selection)
+
+    if selected_files is None:
+        print(selection_error)
+        print("[STOPPED]")
+        return
+
+    if not selected_files:
+        print("[SKIPPED]")
+        return
+
+    unselected_files = [path for path in dirty_files if path not in selected_files]
+    if unselected_files:
+        print("\n[UNSELECTED DIRTY FILES]")
+        for path in unselected_files:
+            print(f"- {path}")
+        print("[NOTE] validation may stop if unselected files keep the working tree dirty")
+
+    print("\n[SELECTED FILES]")
+    for path in selected_files:
         print(f"- {path}")
 
     print("\n[VALIDATION]")
-    ok, output = run_core_validation_for_dirty_files(dirty_files)
+    ok, output = run_core_validation_for_dirty_files(selected_files)
     print(output.rstrip())
 
     if not ok:
@@ -2590,12 +2644,12 @@ def commit_checkpoint_mode():
         print("[STOPPED] commit message required")
         return
 
-    confirm = input("Stage, commit, and push these files? (y/n): ").strip().lower()
+    confirm = input("Stage, commit, and push selected files? (y/n): ").strip().lower()
     if confirm != "y":
         print("[SKIPPED]")
         return
 
-    add_result = run_command_capture(["git", "add", *dirty_files])
+    add_result = run_command_capture(["git", "add", *selected_files])
     if add_result.returncode != 0:
         print(add_result.stderr.strip() or "git add failed")
         print("[FAILED]")

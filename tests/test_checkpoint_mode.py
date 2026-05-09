@@ -64,4 +64,31 @@ def test_build_allowed_dirty_path_pattern_groups_multiple_files():
         "cli.py",
         "tests/test_checkpoint_mode.py",
     ]) == "(cli\\.py|tests/test_checkpoint_mode\\.py)"
+\n\n
+
+def test_parse_checkpoint_file_selection_all():
+    files = ["cli.py", "tests/test_checkpoint_mode.py"]
+    selected, error = cli.parse_checkpoint_file_selection(files, "all")
+    assert error == ""
+    assert selected == files
+
+
+def test_parse_checkpoint_file_selection_numbers():
+    files = ["cli.py", "tests/test_checkpoint_mode.py", "README.md"]
+    selected, error = cli.parse_checkpoint_file_selection(files, "1, 3")
+    assert error == ""
+    assert selected == ["cli.py", "README.md"]
+
+
+def test_parse_checkpoint_file_selection_cancel():
+    files = ["cli.py"]
+    selected, error = cli.parse_checkpoint_file_selection(files, "cancel")
+    assert error == ""
+    assert selected == []
+
+
+def test_parse_checkpoint_file_selection_rejects_out_of_range():
+    selected, error = cli.parse_checkpoint_file_selection(["cli.py"], "2")
+    assert selected is None
+    assert "out of range" in error
 \n
