@@ -1282,6 +1282,78 @@ CORE_BEHAVIOR_VALIDATION_FILES = {
 }
 
 
+
+LAST_EXECUTION_CONTEXT = None
+
+
+def is_jarvis_core_file(file_path):
+    if not file_path:
+        return False
+    app_root = get_app_root()
+    abs_path = os.path.abspath(file_path)
+    basename = os.path.basename(abs_path)
+    return basename in JARVIS_APP_FILES and os.path.dirname(abs_path) == app_root
+
+
+def build_execution_context(file_path=None, instruction=""):
+    app_root = get_app_root()
+    project_root = get_project_state("project_root") or get_current_dir() or app_root
+    target_file = os.path.abspath(file_path) if file_path else ""
+
+    target_scope = "jarvis_core" if is_jarvis_core_file(target_file) else "project"
+    validation_cwd = app_root if target_scope == "jarvis_core" else project_root
+
+    allowed_dirty_paths = []
+    if target_file and target_file.startswith(app_root + os.sep):
+        allowed_dirty_paths.append(os.path.relpath(target_file, app_root))
+
+    return {
+        "app_root": app_root,
+        "project_root": project_root,
+        "target_file": target_file,
+        "target_scope": target_scope,
+        "validation_cwd": validation_cwd,
+        "allowed_dirty_paths": allowed_dirty_paths,
+        "instruction": instruction or "",
+    }
+
+
+def allowed_dirty_pattern(execution_context):
+    paths = list((execution_context or {}).get("allowed_dirty_paths") or [])
+    if not paths:
+        return ""
+    escaped = [re.escape(path) for path in paths]
+    if len(escaped) == 1:
+        return escaped[0]
+    return "(" + "|".join(escaped) + ")"
+
+
+def normalize_command_for_execution_context(command, execution_context):
+    command = command or ""
+    if not execution_context:
+        return command
+
+    if execution_context.get("target_scope") != "jarvis_core":
+        return command
+
+    app_root = execution_context.get("app_root") or get_app_root()
+    replacements = {}
+
+    for name in JARVIS_APP_FILES:
+        replacements[name] = os.path.join(app_root, name)
+
+    replacements["tests/run_all.sh"] = os.path.join(app_root, "tests", "run_all.sh")
+
+    normalized = command
+    for relative_path, absolute_path in sorted(replacements.items(), key=lambda item: len(item[0]), reverse=True):
+        normalized = re.sub(
+            rf'(?<![\w/.-])(?:\./)?{re.escape(relative_path)}(?![\w/.-])',
+            absolute_path,
+            normalized,
+        )
+
+    return normalized
+
 def requires_behavior_validation(file_path, instruction):
     basename = os.path.basename(file_path or "")
     if basename in CORE_BEHAVIOR_VALIDATION_FILES:
@@ -1291,7 +1363,8 @@ def requires_behavior_validation(file_path, instruction):
     return any(keyword in lowered for keyword in BEHAVIOR_VALIDATION_KEYWORDS)
 
 
-def run_behavior_validation(file_path, instruction, validation_mode=None):
+def run_behavior_validation(file_path, instruction, validation_mode=None, execution_context=None):
+    execution_context = execution_context or build_execution_context(file_path, instruction)
     basename = os.path.basename(file_path or "")
 
     if validation_mode == "new_python_file":
@@ -1428,11 +1501,13 @@ def run_behavior_validation(file_path, instruction, validation_mode=None):
         test_script = os.path.join(get_app_root(), "tests", "run_all.sh")
         if os.path.exists(test_script):
             env_prefix = ""
-            if file_path:
-                rel_path = os.path.relpath(file_path, get_app_root())
-                allowed_dirty = f"({rel_path}|tests/run_all.sh)"
+            allowed_dirty = allowed_dirty_pattern(execution_context)
+            if allowed_dirty:
                 env_prefix = f"JARVIS_ALLOWED_DIRTY_PATH='{allowed_dirty}' "
-            result = executor_mod.run_command(env_prefix + test_script)
+            validation_command = test_script
+            if allowed_dirty:
+                validation_command = f"env JARVIS_ALLOWED_DIRTY_PATH={allowed_dirty} {test_script}"
+            result = executor_mod.run_command(validation_command)
             if not result.get("success"):
                 return False, (
                     "Behavior validation failed: regression suite failed. "
@@ -1539,6 +1614,9 @@ def run_edit(step):
     instruction = strengthen_edit_instruction(instruction)
 
     file_path = resolve_edit_file_path(file_name)
+    execution_context = build_execution_context(file_path, instruction)
+    global LAST_EXECUTION_CONTEXT
+    LAST_EXECUTION_CONTEXT = execution_context
     print(f"[TARGET RESOLVED] {file_name} -> {file_path}")
     old = read_file_text(file_path) if os.path.exists(file_path) else ""
     is_new_file = not os.path.exists(file_path)
@@ -1756,7 +1834,8 @@ def run_edit(step):
     validation_mode = choose_validation_mode(file_path, old, instruction)
     backup_path = make_backup(file_path)
     write_file_text(file_path, new)
-    behavior_ok, behavior_msg = run_behavior_validation(file_path, instruction, validation_mode=validation_mode)
+    behavior_ok, behavior_msg = run_behavior_validation(file_path, instruction, validation_mode=validation_mode, execution_context=execution_context)
+    LAST_EXECUTION_CONTEXT = execution_context
     print(behavior_msg)
     if not behavior_ok:
         print(rollback_file_after_failed_validation(file_path, old, backup_path))
@@ -2013,7 +2092,10 @@ def execute_plan(steps, retry_depth=0):
         elif is_run_step(step):
             ok = run_project_script()
         else:
-            ok = run_step(step)
+            command_step = normalize_command_for_execution_context(step, LAST_EXECUTION_CONTEXT)
+            if command_step != step:
+                print(f"[CONTEXT COMMAND] {step} -> {command_step}")
+            ok = run_step(command_step)
 
         if not ok:
             print("\n[STOPPED] step failed")
@@ -2495,7 +2577,7 @@ def edits_mode():
 
 def help_mode():
     print("""
-Available commands:
+Commands:
   continue <request>     Autonomous context-aware edit/run loop
   context                Prompt for a continue-style request
   planner                Generate and show a plan
