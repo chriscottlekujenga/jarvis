@@ -1821,6 +1821,27 @@ def strengthen_edit_instruction(instruction):
 
 
 
+
+
+def append_top_level_function_before_entrypoint(file_text, function_definition):
+    file_text = file_text or ""
+    function_definition = (function_definition or "").strip()
+
+    if not function_definition:
+        return file_text
+
+    entrypoint_match = re.search(r'(?m)^if __name__ == ["\']__main__["\']:\s*$', file_text)
+
+    addition = "\n\n" + function_definition + "\n"
+
+    if entrypoint_match:
+        prefix = file_text[:entrypoint_match.start()].rstrip()
+        suffix = file_text[entrypoint_match.start():].lstrip("\n")
+        return prefix + addition + "\n" + suffix
+
+    return file_text.rstrip() + addition
+
+
 def deterministic_new_function_definition(function_name, instruction):
     if not function_name:
         return ""
@@ -1897,8 +1918,7 @@ def run_edit(step):
         if returned_name != requested_function:
             return record_edit_failure("wrong_generated_function_name", f"Rejected: generated new function returned {returned_name} instead of {requested_function}")
 
-        separator = "\n\n" if old and not old.endswith("\n\n") else ""
-        new = old.rstrip() + separator + new_function_definition + "\n"
+        new = append_top_level_function_before_entrypoint(old, new_function_definition)
         target_function = None
         max_diff_ratio = 1.0
         max_changed_lines = max(max_changed_lines, 50)

@@ -342,3 +342,13 @@ def test_deterministic_new_function_definition_returns_false():
         "add a function named smoke_marker_for_jarvis_core_validation that returns False",
     ) == "def smoke_marker_for_jarvis_core_validation():\n    return False\n"
 
+
+def test_append_top_level_function_before_entrypoint():
+    original = 'def existing():\n    return True\n\nif __name__ == "__main__":\n    main()\n'
+    addition = 'def added():\n    return False\n'
+
+    updated = cli.append_top_level_function_before_entrypoint(original, addition)
+
+    assert updated.index("def added") < updated.index('if __name__ == "__main__":')
+    assert "def added():\n    return False\n" in updated
+
