@@ -1359,6 +1359,8 @@ def extract_requested_function_name(instruction):
         r'create\s+def\s+([A-Za-z_][A-Za-z0-9_]*)\s*\(',
         r'add\s+a\s+([A-Za-z_][A-Za-z0-9_]*)\s+function',
         r'create\s+a\s+([A-Za-z_][A-Za-z0-9_]*)\s+function',
+        r'(?:function|helper|regression helper)\s+named\s+([A-Za-z_][A-Za-z0-9_]*)',
+        r'named\s+([A-Za-z_][A-Za-z0-9_]*)\s+that\s+returns',
     ]
     for pattern in patterns:
         match = re.search('(?i)' + pattern, instruction)

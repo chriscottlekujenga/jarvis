@@ -316,3 +316,15 @@ def test_context_shell_validation_allows_matching_py_compile_for_test_edit():
         "/home/chris/jarvis/tests/test_checkpoint_mode.py",
     )
 
+
+def test_extract_requested_function_name_from_named_helper():
+    assert cli.extract_requested_function_name(
+        "add a function-level regression helper named smoke_marker_for_jarvis_core_validation that returns True"
+    ) == "smoke_marker_for_jarvis_core_validation"
+
+
+def test_extract_requested_function_name_from_function_named_phrase():
+    assert cli.extract_requested_function_name(
+        "create a function named validate_context_plan_step that returns True"
+    ) == "validate_context_plan_step"
+
