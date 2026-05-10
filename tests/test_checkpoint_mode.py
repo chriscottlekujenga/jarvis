@@ -1,5 +1,7 @@
+import inspect
 import os
 import sys
+import tempfile
 from pathlib import Path
 from unittest.mock import patch
 
@@ -11,7 +13,7 @@ import cli
 def test_get_git_dirty_files_parses_status_lines():
     fake = type("Result", (), {
         "returncode": 0,
-        "stdout": " M cli.py\\n?? scripts/install_pre_commit_hook.sh\\n",
+        "stdout": " M cli.py\n?? scripts/install_pre_commit_hook.sh\n",
         "stderr": "",
     })()
 
@@ -19,7 +21,7 @@ def test_get_git_dirty_files_parses_status_lines():
         files, error = cli.get_git_dirty_files()
 
     assert error == ""
-    assert files == ["cli.py", "scripts/install_pre_commit_hook.sh"]
+    assert files == ["cli.py", "scripts/install_pre_commit_hook.sh"], files
 
 
 def test_run_core_validation_uses_allowed_dirty_pattern():
@@ -52,8 +54,6 @@ def test_run_core_validation_uses_allowed_dirty_pattern():
     assert ok
     assert "ALL TESTS PASSED" in output
 
-
-print("PASS: checkpoint mode")
 
 def test_build_allowed_dirty_path_pattern_escapes_single_file():
     assert cli.build_allowed_dirty_path_pattern("cli.py".split()) == "cli\\.py"
@@ -351,4 +351,65 @@ def test_append_top_level_function_before_entrypoint():
 
     assert updated.index("def added") < updated.index('if __name__ == "__main__":')
     assert "def added():\n    return False\n" in updated
+
+
+class SimpleMonkeyPatch:
+    def __init__(self):
+        self._patches = []
+
+    def setattr(self, target, name=None, value=None):
+        if isinstance(target, str):
+            if name is None:
+                raise TypeError("setattr expected value for dotted target")
+            patcher = patch(target, name)
+        else:
+            if name is None:
+                raise TypeError("setattr expected attribute name")
+            patcher = patch.object(target, name, value)
+
+        patcher.start()
+        self._patches.append(patcher)
+
+    def undo(self):
+        while self._patches:
+            self._patches.pop().stop()
+
+
+def run_tests():
+    test_items = [
+        (name, fn)
+        for name, fn in sorted(globals().items())
+        if name.startswith("test_") and callable(fn)
+    ]
+
+    for name, fn in test_items:
+        monkeypatch = SimpleMonkeyPatch()
+        temp_dir = None
+
+        try:
+            kwargs = {}
+            signature = inspect.signature(fn)
+
+            if "monkeypatch" in signature.parameters:
+                kwargs["monkeypatch"] = monkeypatch
+
+            if "tmp_path" in signature.parameters:
+                temp_dir = tempfile.TemporaryDirectory()
+                kwargs["tmp_path"] = Path(temp_dir.name)
+
+            try:
+                fn(**kwargs)
+            except Exception as exc:
+                print(f"FAILED TEST: {name}")
+                raise
+        finally:
+            monkeypatch.undo()
+            if temp_dir is not None:
+                temp_dir.cleanup()
+
+    print(f"PASS: checkpoint mode ({len(test_items)} tests)")
+
+
+if __name__ == "__main__":
+    run_tests()
 
