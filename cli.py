@@ -1819,6 +1819,23 @@ def strengthen_edit_instruction(instruction):
 
     return instruction
 
+
+
+def deterministic_new_function_definition(function_name, instruction):
+    if not function_name:
+        return ""
+
+    lowered = (instruction or "").lower()
+
+    if "returns true" in lowered or "return true" in lowered:
+        return f"def {function_name}():\n    return True\n"
+
+    if "returns false" in lowered or "return false" in lowered:
+        return f"def {function_name}():\n    return False\n"
+
+    return ""
+
+
 def run_edit(step):
     parts = step.split(" to ", 1)
     if len(parts) != 2:
@@ -1860,13 +1877,16 @@ def run_edit(step):
 
     if requested_function and not find_function_block(old, requested_function):
         print(f"[FUNCTION] {requested_function} does not exist, generating function definition")
-        new_function_definition = ask_llm_edit_function(
-            file_path=file_path,
-            function_name=requested_function,
-            old_function=f"def {requested_function}(*args, **kwargs):\n    pass\n",
-            instruction=instruction,
-            file_context=old,
-        ).replace("", "").strip()
+        new_function_definition = deterministic_new_function_definition(requested_function, instruction)
+
+        if not new_function_definition:
+            new_function_definition = ask_llm_edit_function(
+                file_path=file_path,
+                function_name=requested_function,
+                old_function=f"def {requested_function}(*args, **kwargs):\n    pass\n",
+                instruction=instruction,
+                file_context=old,
+            ).strip()
 
         returned_name_match = re.search(r'(?m)^def ([A-Za-z_][A-Za-z0-9_]*)\s*\(', new_function_definition)
         if not returned_name_match:

@@ -328,3 +328,17 @@ def test_extract_requested_function_name_from_function_named_phrase():
         "create a function named validate_context_plan_step that returns True"
     ) == "validate_context_plan_step"
 
+
+def test_deterministic_new_function_definition_returns_true():
+    assert cli.deterministic_new_function_definition(
+        "smoke_marker_for_jarvis_core_validation",
+        "add a function named smoke_marker_for_jarvis_core_validation that returns True",
+    ) == "def smoke_marker_for_jarvis_core_validation():\n    return True\n"
+
+
+def test_deterministic_new_function_definition_returns_false():
+    assert cli.deterministic_new_function_definition(
+        "smoke_marker_for_jarvis_core_validation",
+        "add a function named smoke_marker_for_jarvis_core_validation that returns False",
+    ) == "def smoke_marker_for_jarvis_core_validation():\n    return False\n"
+
