@@ -749,12 +749,17 @@ def context_shell_validation_step_is_allowed(step, latest_edit_target=""):
 
     if is_py_compile_step(step) and latest_edit_target:
         edit_base = os.path.basename(latest_edit_target)
+        edit_rel = os.path.relpath(os.path.abspath(latest_edit_target), get_app_root())
         refs = extract_file_refs_from_shell_step(step)
         ref_bases = {os.path.basename(ref) for ref in refs}
 
         if edit_base in JARVIS_APP_FILES:
             app_refs = ref_bases.intersection(JARVIS_APP_FILES)
             if app_refs and edit_base not in app_refs:
+                return False
+
+        if edit_rel.startswith("tests/") and edit_rel.endswith(".py"):
+            if edit_rel not in refs and edit_base not in ref_bases:
                 return False
 
     return True

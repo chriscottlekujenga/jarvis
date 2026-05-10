@@ -302,3 +302,17 @@ def test_plan_targets_jarvis_core_ignores_project_edit():
         "edit /home/chris/jarvis/file_renamer/rename_files.py to add logging",
     ])
 
+
+def test_context_shell_validation_rejects_unrelated_py_compile_for_test_edit():
+    assert not cli.context_shell_validation_step_is_allowed(
+        "python3 -m py_compile cli.py",
+        "/home/chris/jarvis/tests/test_checkpoint_mode.py",
+    )
+
+
+def test_context_shell_validation_allows_matching_py_compile_for_test_edit():
+    assert cli.context_shell_validation_step_is_allowed(
+        "python3 -m py_compile tests/test_checkpoint_mode.py",
+        "/home/chris/jarvis/tests/test_checkpoint_mode.py",
+    )
+
