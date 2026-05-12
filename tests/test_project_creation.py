@@ -478,6 +478,8 @@ def test_build_consultative_sales_app_scaffold_creates_expected_files():
     assert "get_ai_model" in scaffold["backend/app.py"]
     assert "has_api_key" in scaffold["backend/app.py"]
     assert "call_ai_model_stub" in scaffold["backend/app.py"]
+    assert "build_next_question_response" in scaffold["backend/app.py"]
+    assert "build_proposal_response" in scaffold["backend/app.py"]
     assert "localBackendStub" in scaffold["frontend/script.js"]
     assert "renderBackendResponse" in scaffold["frontend/script.js"]
     assert "requestNextQuestion" in scaffold["frontend/script.js"]
@@ -614,6 +616,9 @@ def test_generated_consultative_sales_backend_runs_with_local_stub():
         assert '"recommended_offer": "operational assessment"' in result.stdout
         assert '"ai_mode": "local_stub"' in result.stdout
         assert '"ai_model": "gpt-4.1-mini"' in result.stdout
+        assert '"session_state"' in result.stdout
+        assert '"matched_signals"' in result.stdout
+        assert '"matched_pains"' in result.stdout
 
 
 def test_validate_consultative_sales_app_scaffold_fails_when_frontend_contract_marker_missing():
@@ -682,6 +687,44 @@ def test_generated_backend_contains_api_boundary_contract():
     assert "api_ready" in backend
     assert "local_stub" in backend
     assert "call_ai_model_stub" in backend
+    assert "build_next_question_response" in backend
+    assert "build_proposal_response" in backend
+
+
+def test_validate_consultative_sales_app_scaffold_fails_when_response_builder_missing():
+    with tempfile.TemporaryDirectory() as tmp:
+        scaffold = cli.build_consultative_sales_app_scaffold("lean_consulting_ai_sales_advisor")
+        scaffold["backend/app.py"] = scaffold["backend/app.py"].replace("build_next_question_response", "missing_next_question_response")
+        cli.write_scaffold_files(tmp, scaffold)
+
+        ok, message = cli.validate_consultative_sales_app_scaffold(tmp)
+
+        assert not ok
+        assert "build_next_question_response" in message
+
+
+def test_generated_backend_response_builder_contract_runs_directly():
+    with tempfile.TemporaryDirectory() as tmp:
+        ok, message = cli.create_project("Lean Consulting AI Sales Advisor", projects_root=tmp, project_type="web")
+        assert ok, message
+
+        project_root = os.path.join(tmp, "lean_consulting_ai_sales_advisor")
+        result = subprocess.run(
+            [
+                "python3",
+                "-c",
+                "import backend.app as app; response = app.build_next_question_response('We have missed delivery dates and low OEE.'); print(response['status']); print(response['matched_pains']); print(response['session_state']['buying_intent_score'])",
+            ],
+            cwd=project_root,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+
+        assert result.returncode == 0, result.stderr
+        assert "ready" in result.stdout
+        assert "missed delivery dates" in result.stdout
+        assert "low OEE" in result.stdout
 
 def run_tests():
     test_items = [
