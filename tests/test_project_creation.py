@@ -361,6 +361,31 @@ def test_create_web_project_uses_product_storefront_template_for_ordering_reques
         assert "product storefront ready" in script_text
 
 
+def test_build_web_project_templates_creates_dashboard_content():
+    templates = cli.build_web_project_templates("sales_metrics_dashboard", "dashboard_app")
+
+    assert "Dashboard App" in templates["index"]
+    assert "metric-grid" in templates["index"]
+    assert "metric-card" in templates["styles"]
+    assert "dashboard app ready" in templates["script"]
+
+
+def test_create_web_project_uses_dashboard_template_for_dashboard_request():
+    with tempfile.TemporaryDirectory() as tmp:
+        ok, message = cli.create_project("Sales Metrics Dashboard", projects_root=tmp, project_type="web")
+        assert ok, message
+
+        project_root = os.path.join(tmp, "sales_metrics_dashboard")
+        index_text = Path(os.path.join(project_root, "index.html")).read_text()
+        styles_text = Path(os.path.join(project_root, "styles.css")).read_text()
+        script_text = Path(os.path.join(project_root, "script.js")).read_text()
+
+        assert "Dashboard App" in index_text
+        assert "metric-grid" in index_text
+        assert "metric-card" in styles_text
+        assert "dashboard app ready" in script_text
+
+
 def run_tests():
     test_items = [
         (name, fn)
