@@ -287,6 +287,49 @@ def test_choose_web_app_blueprint_handles_underscored_ordering_request():
     assert selected["name"] == "product_storefront"
 
 
+def test_format_project_state_includes_web_blueprint_state():
+    rows = [
+        ("project_type", "web", "now"),
+        ("web_blueprint", "product_storefront", "now"),
+        ("web_blueprint_reason", "The request emphasizes products, ordering, pricing, or purchase flow.", "now"),
+    ]
+
+    with patch("cli.get_all_project_state", return_value=rows):
+        with patch("cli.list_project_python_files", return_value=[]):
+            rendered = cli.format_project_state()
+
+    assert "project_type: web" in rendered
+    assert "web_blueprint: product_storefront" in rendered
+    assert "web_blueprint_reason: The request emphasizes products, ordering, pricing, or purchase flow." in rendered
+
+
+def test_context_mode_passes_web_blueprint_state_to_context_planner():
+    captured = {}
+
+    def fake_ask_llm_context_plan(request, project_state, cwd):
+        captured["request"] = request
+        captured["project_state"] = project_state
+        captured["cwd"] = cwd
+        return "1. edit index.html to add a storefront hero section"
+
+    with patch("cli.get_project_state", side_effect=lambda key, default=None: {
+        "project_root": "/tmp/example_web_project",
+    }.get(key, default)):
+        with patch("cli.os.path.isdir", return_value=True):
+            with patch("cli.set_current_dir"):
+                with patch("cli.get_current_dir", return_value="/tmp/example_web_project"):
+                    with patch("cli.format_project_state", return_value="project_type: web\nweb_blueprint: product_storefront\nweb_blueprint_reason: The request emphasizes products, ordering, pricing, or purchase flow."):
+                        with patch("cli.ask_llm_context_plan", side_effect=fake_ask_llm_context_plan):
+                            with patch("cli.parse_plan_steps", return_value=["edit index.html to add a storefront hero section"]):
+                                with patch("cli.normalize_context_steps", return_value=["edit /tmp/example_web_project/index.html to add a storefront hero section"]):
+                                    with patch("builtins.input", return_value="n"):
+                                        cli.context_mode("add product cards")
+
+    assert captured["request"] == "add product cards"
+    assert "web_blueprint: product_storefront" in captured["project_state"]
+    assert "web_blueprint_reason:" in captured["project_state"]
+
+
 def run_tests():
     test_items = [
         (name, fn)
