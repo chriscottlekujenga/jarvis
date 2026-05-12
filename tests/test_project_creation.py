@@ -464,6 +464,9 @@ def test_build_consultative_sales_app_scaffold_creates_expected_files():
     assert "generate_next_question_stub" in scaffold["backend/app.py"]
     assert "score_proposal_readiness" in scaffold["backend/app.py"]
     assert "generate_proposal_stub" in scaffold["backend/app.py"]
+    assert "get_ai_model" in scaffold["backend/app.py"]
+    assert "has_api_key" in scaffold["backend/app.py"]
+    assert "call_ai_model_stub" in scaffold["backend/app.py"]
     assert "localBackendStub" in scaffold["frontend/script.js"]
     assert "renderBackendResponse" in scaffold["frontend/script.js"]
     assert "requestNextQuestion" in scaffold["frontend/script.js"]
@@ -591,6 +594,8 @@ def test_generated_consultative_sales_backend_runs_with_local_stub():
         assert '"proposal_readiness_score": 0' in result.stdout
         assert '"proposal"' in result.stdout
         assert '"recommended_offer": "operational assessment"' in result.stdout
+        assert '"ai_mode": "local_stub"' in result.stdout
+        assert '"ai_model": "gpt-4.1-mini"' in result.stdout
 
 
 def test_validate_consultative_sales_app_scaffold_fails_when_frontend_contract_marker_missing():
@@ -636,6 +641,29 @@ def test_generated_backend_contains_proposal_readiness_contract():
     assert "score_proposal_readiness" in backend
     assert "generate_proposal_stub" in backend
     assert "expected_outcomes" in backend
+
+
+def test_validate_consultative_sales_app_scaffold_fails_when_api_boundary_marker_missing():
+    with tempfile.TemporaryDirectory() as tmp:
+        scaffold = cli.build_consultative_sales_app_scaffold("lean_consulting_ai_sales_advisor")
+        scaffold["backend/app.py"] = scaffold["backend/app.py"].replace("call_ai_model_stub", "missing_ai_boundary")
+        cli.write_scaffold_files(tmp, scaffold)
+
+        ok, message = cli.validate_consultative_sales_app_scaffold(tmp)
+
+        assert not ok
+        assert "call_ai_model_stub" in message
+
+
+def test_generated_backend_contains_api_boundary_contract():
+    scaffold = cli.build_consultative_sales_app_scaffold("lean_consulting_ai_sales_advisor")
+    backend = scaffold["backend/app.py"]
+
+    assert "OPENAI_API_KEY" in backend
+    assert "AI_MODEL" in backend
+    assert "api_ready" in backend
+    assert "local_stub" in backend
+    assert "call_ai_model_stub" in backend
 
 def run_tests():
     test_items = [
