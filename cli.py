@@ -686,6 +686,13 @@ WEB_APP_BLUEPRINTS = {
 }
 
 
+
+
+def infer_project_capability_type(blueprint_name):
+    if blueprint_name == "consultative_sales_platform":
+        return "ai_interactive"
+    return "static_web"
+
 def choose_web_app_blueprint(request_text):
     lowered = re.sub(r"[_-]+", " ", (request_text or "").lower())
 
@@ -3026,6 +3033,10 @@ def create_project_mode(project_name, project_type="python"):
         return
 
     if project_type == "web" and blueprint:
+        capability_type = infer_project_capability_type(blueprint["name"])
+        set_project_state("project_blueprint", blueprint["name"])
+        set_project_state("project_blueprint_reason", blueprint["reason"])
+        set_project_state("project_capability_type", capability_type)
         set_project_state("web_blueprint", blueprint["name"])
         set_project_state("web_blueprint_reason", blueprint["reason"])
 

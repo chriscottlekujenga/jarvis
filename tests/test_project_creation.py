@@ -277,6 +277,9 @@ def test_create_project_mode_prints_and_stores_web_blueprint(capsys=None):
     assert "Reason:" in rendered
     assert "Created web project" in rendered
     assert "[OK]" in rendered
+    assert stored_state["project_blueprint"] == "product_storefront"
+    assert "products" in stored_state["project_blueprint_reason"].lower()
+    assert stored_state["project_capability_type"] == "static_web"
     assert stored_state["web_blueprint"] == "product_storefront"
     assert "products" in stored_state["web_blueprint_reason"].lower()
 
@@ -304,6 +307,31 @@ def test_choose_web_app_blueprint_handles_underscored_ordering_request():
     selected = cli.choose_web_app_blueprint("bakery_ordering_smoke")
     assert selected["name"] == "product_storefront"
 
+
+
+def test_infer_project_capability_type_marks_consultative_sales_as_ai_interactive():
+    assert cli.infer_project_capability_type("consultative_sales_platform") == "ai_interactive"
+
+
+def test_infer_project_capability_type_marks_static_blueprints_as_static_web():
+    assert cli.infer_project_capability_type("product_storefront") == "static_web"
+    assert cli.infer_project_capability_type("dashboard_app") == "static_web"
+
+
+def test_create_project_mode_stores_ai_interactive_project_blueprint():
+    stored_state = {}
+
+    def fake_set_project_state(key, value):
+        stored_state[key] = value
+
+    with patch("builtins.print"):
+        with patch("cli.set_project_state", side_effect=fake_set_project_state):
+            with patch("cli.create_project", return_value=(True, "Created web project: /tmp/example")):
+                cli.create_project_mode("lean consulting ai sales advisor", project_type="web")
+
+    assert stored_state["project_blueprint"] == "consultative_sales_platform"
+    assert stored_state["project_capability_type"] == "ai_interactive"
+    assert stored_state["web_blueprint"] == "consultative_sales_platform"
 
 def test_format_project_state_includes_web_blueprint_state():
     rows = [
