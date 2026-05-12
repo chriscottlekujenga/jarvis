@@ -462,6 +462,10 @@ def test_build_consultative_sales_app_scaffold_creates_expected_files():
     assert "load_service_module" in scaffold["backend/app.py"]
     assert "score_basic_buying_intent" in scaffold["backend/app.py"]
     assert "generate_next_question_stub" in scaffold["backend/app.py"]
+    assert "localBackendStub" in scaffold["frontend/script.js"]
+    assert "renderBackendResponse" in scaffold["frontend/script.js"]
+    assert "requestNextQuestion" in scaffold["frontend/script.js"]
+    assert "/api/next-question" in scaffold["frontend/script.js"]
 
 
 def test_create_web_project_scaffolds_consultative_sales_platform_files():
@@ -582,6 +586,29 @@ def test_generated_consultative_sales_backend_runs_with_local_stub():
         assert '"status": "ready"' in result.stdout
         assert '"service_key": "lean_consulting"' in result.stdout
         assert "operational problem" in result.stdout
+
+
+def test_validate_consultative_sales_app_scaffold_fails_when_frontend_contract_marker_missing():
+    with tempfile.TemporaryDirectory() as tmp:
+        scaffold = cli.build_consultative_sales_app_scaffold("lean_consulting_ai_sales_advisor")
+        scaffold["frontend/script.js"] = scaffold["frontend/script.js"].replace("renderBackendResponse", "missing_render_contract")
+        cli.write_scaffold_files(tmp, scaffold)
+
+        ok, message = cli.validate_consultative_sales_app_scaffold(tmp)
+
+        assert not ok
+        assert "renderBackendResponse" in message
+
+
+def test_generated_frontend_script_contains_backend_response_shape():
+    scaffold = cli.build_consultative_sales_app_scaffold("lean_consulting_ai_sales_advisor")
+    script = scaffold["frontend/script.js"]
+
+    assert "status" in script
+    assert "service_key" in script
+    assert "next_question" in script
+    assert "session_state" in script
+    assert "POST /api/next-question" in script
 
 def run_tests():
     test_items = [
