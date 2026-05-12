@@ -109,6 +109,17 @@ def test_create_web_project_creates_web_files_without_python_compile_requirement
         assert status_check.stdout.strip() == ""
 
 
+
+def test_create_regular_web_project_keeps_generic_readme():
+    with tempfile.TemporaryDirectory() as tmp:
+        ok, message = cli.create_project("Simple Web App", projects_root=tmp, project_type="web")
+        assert ok, message
+
+        readme_text = Path(os.path.join(tmp, "simple_web_app", "README.md")).read_text()
+
+        assert "Created by Jarvis as a web project." in readme_text
+        assert "AI consultative sales platform" not in readme_text
+
 def test_create_project_rejects_unknown_project_type():
     with tempfile.TemporaryDirectory() as tmp:
         ok, message = cli.create_project("Bad Type", projects_root=tmp, project_type="mobile")
@@ -500,6 +511,13 @@ def test_create_web_project_scaffolds_consultative_sales_platform_files():
         assert "OPENAI_API_KEY" in Path(os.path.join(project_root, ".env.example")).read_text()
         assert "AI Consultative Sales Platform" in Path(os.path.join(project_root, "frontend/index.html")).read_text()
         assert "lean_consulting" in Path(os.path.join(project_root, "service_modules/lean_consulting.json")).read_text()
+
+        readme_text = Path(os.path.join(project_root, "README.md")).read_text()
+        assert "AI consultative sales platform" in readme_text
+        assert "python3 backend/app.py" in readme_text
+        assert "ai_mode: local_stub" in readme_text
+        assert "ai_mode: api_ready" in readme_text
+        assert "call_ai_model_stub()" in readme_text
 
 
 def test_validate_consultative_sales_app_scaffold_passes_for_generated_scaffold():

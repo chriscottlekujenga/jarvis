@@ -2893,7 +2893,47 @@ def create_project(project_name, projects_root=None, project_type="python"):
                 return False, scaffold_message
 
     if not os.path.exists(readme_path):
-        write_file_text(readme_path, f"# {clean_name}\n\nCreated by Jarvis as a {project_type} project.\n")
+        if project_type == "web" and blueprint_name == "consultative_sales_platform":
+            readme_text = f"""# {clean_name}
+
+Created by Jarvis as an AI consultative sales platform.
+
+## Run the local backend stub
+
+Run:
+
+    python3 backend/app.py
+
+Without OPENAI_API_KEY, the generated backend runs in deterministic local mode and reports:
+
+    ai_mode: local_stub
+
+## Prepare for API-backed reasoning
+
+Copy .env.example to .env and set:
+
+    OPENAI_API_KEY=your_api_key_here
+    AI_MODEL=gpt-4.1-mini
+
+When OPENAI_API_KEY is present, the backend API boundary reports:
+
+    ai_mode: api_ready
+
+## Key files
+
+- backend/app.py contains the reasoning stub, API boundary, proposal readiness scoring, and proposal stub.
+- frontend/script.js contains the frontend/backend contract for POST /api/next-question.
+- prompts/ contains the sales reasoning, next-question, and proposal-generation prompts.
+- service_modules/lean_consulting.json contains the first service module.
+- schemas/ contains session state and proposal output shapes.
+
+## Next development step
+
+Replace call_ai_model_stub() with a real API client while preserving the deterministic local fallback for testing.
+"""
+        else:
+            readme_text = f"# {clean_name}\n\nCreated by Jarvis as a {project_type} project.\n"
+        write_file_text(readme_path, readme_text)
 
     git_dir = os.path.join(project_root, ".git")
     if not os.path.isdir(git_dir):
