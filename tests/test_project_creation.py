@@ -3,6 +3,7 @@ import subprocess
 import sys
 import tempfile
 from pathlib import Path
+from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
@@ -234,6 +235,42 @@ def test_choose_web_app_blueprint_defaults_to_small_business_landing():
     selected = cli.choose_web_app_blueprint("Build a simple website for a local bakery")
     assert selected["name"] == "small_business_landing"
     assert "business" in selected["description"].lower()
+
+
+def test_create_project_mode_prints_web_blueprint(capsys=None):
+    output = []
+
+    def fake_print(*args, **kwargs):
+        output.append(" ".join(str(arg) for arg in args))
+
+    with patch("builtins.print", side_effect=fake_print):
+        with patch("cli.create_project", return_value=(True, "Created web project: /tmp/example")):
+            cli.create_project_mode("bakery website with products and ordering", project_type="web")
+
+    rendered = "\n".join(output)
+
+    assert "[WEB BLUEPRINT]" in rendered
+    assert "Selected:" in rendered
+    assert "Reason:" in rendered
+    assert "Created web project" in rendered
+    assert "[OK]" in rendered
+
+
+def test_create_project_mode_does_not_print_blueprint_for_python_project():
+    output = []
+
+    def fake_print(*args, **kwargs):
+        output.append(" ".join(str(arg) for arg in args))
+
+    with patch("builtins.print", side_effect=fake_print):
+        with patch("cli.create_project", return_value=(True, "Created python project: /tmp/example")):
+            cli.create_project_mode("utility script", project_type="python")
+
+    rendered = "\n".join(output)
+
+    assert "[WEB BLUEPRINT]" not in rendered
+    assert "Created python project" in rendered
+    assert "[OK]" in rendered
 
 
 def run_tests():
