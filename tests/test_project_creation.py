@@ -459,6 +459,9 @@ def test_build_consultative_sales_app_scaffold_creates_expected_files():
     assert "sales reasoning engine" in scaffold["prompts/sales_reasoning_system.txt"].lower()
     assert "one strong question" in scaffold["prompts/next_question_prompt.txt"].lower()
     assert "proposal readiness" in scaffold["prompts/proposal_generation_prompt.txt"].lower()
+    assert "load_service_module" in scaffold["backend/app.py"]
+    assert "score_basic_buying_intent" in scaffold["backend/app.py"]
+    assert "generate_next_question_stub" in scaffold["backend/app.py"]
 
 
 def test_create_web_project_scaffolds_consultative_sales_platform_files():
@@ -547,6 +550,38 @@ def test_validate_consultative_sales_app_scaffold_fails_when_prompt_marker_missi
 
         assert not ok
         assert "sales reasoning prompt" in message
+
+
+def test_validate_consultative_sales_app_scaffold_fails_when_backend_reasoning_marker_missing():
+    with tempfile.TemporaryDirectory() as tmp:
+        scaffold = cli.build_consultative_sales_app_scaffold("lean_consulting_ai_sales_advisor")
+        scaffold["backend/app.py"] = scaffold["backend/app.py"].replace("score_basic_buying_intent", "missing_score_function")
+        cli.write_scaffold_files(tmp, scaffold)
+
+        ok, message = cli.validate_consultative_sales_app_scaffold(tmp)
+
+        assert not ok
+        assert "score_basic_buying_intent" in message
+
+
+def test_generated_consultative_sales_backend_runs_with_local_stub():
+    with tempfile.TemporaryDirectory() as tmp:
+        ok, message = cli.create_project("Lean Consulting AI Sales Advisor", projects_root=tmp, project_type="web")
+        assert ok, message
+
+        project_root = os.path.join(tmp, "lean_consulting_ai_sales_advisor")
+        result = subprocess.run(
+            ["python3", "backend/app.py"],
+            cwd=project_root,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+
+        assert result.returncode == 0, result.stderr
+        assert '"status": "ready"' in result.stdout
+        assert '"service_key": "lean_consulting"' in result.stdout
+        assert "operational problem" in result.stdout
 
 def run_tests():
     test_items = [
