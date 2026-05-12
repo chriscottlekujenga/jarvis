@@ -2964,6 +2964,8 @@ def commit_checkpoint_mode(inline_message=""):
 
 
 def create_project_mode(project_name, project_type="python"):
+    blueprint = None
+
     if project_type == "web":
         blueprint = choose_web_app_blueprint(project_name)
         print("\n[WEB BLUEPRINT]")
@@ -2975,6 +2977,11 @@ def create_project_mode(project_name, project_type="python"):
     if not ok:
         print("[FAILED]")
         return
+
+    if project_type == "web" and blueprint:
+        set_project_state("web_blueprint", blueprint["name"])
+        set_project_state("web_blueprint_reason", blueprint["reason"])
+
     print("[OK]")
 
 

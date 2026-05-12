@@ -237,15 +237,20 @@ def test_choose_web_app_blueprint_defaults_to_small_business_landing():
     assert "business" in selected["description"].lower()
 
 
-def test_create_project_mode_prints_web_blueprint(capsys=None):
+def test_create_project_mode_prints_and_stores_web_blueprint(capsys=None):
     output = []
+    stored_state = {}
 
     def fake_print(*args, **kwargs):
         output.append(" ".join(str(arg) for arg in args))
 
+    def fake_set_project_state(key, value):
+        stored_state[key] = value
+
     with patch("builtins.print", side_effect=fake_print):
-        with patch("cli.create_project", return_value=(True, "Created web project: /tmp/example")):
-            cli.create_project_mode("bakery website with products and ordering", project_type="web")
+        with patch("cli.set_project_state", side_effect=fake_set_project_state):
+            with patch("cli.create_project", return_value=(True, "Created web project: /tmp/example")):
+                cli.create_project_mode("bakery website with products and ordering", project_type="web")
 
     rendered = "\n".join(output)
 
@@ -254,23 +259,27 @@ def test_create_project_mode_prints_web_blueprint(capsys=None):
     assert "Reason:" in rendered
     assert "Created web project" in rendered
     assert "[OK]" in rendered
+    assert stored_state["web_blueprint"] == "product_storefront"
+    assert "products" in stored_state["web_blueprint_reason"].lower()
 
 
-def test_create_project_mode_does_not_print_blueprint_for_python_project():
+def test_create_project_mode_does_not_print_or_store_blueprint_for_python_project():
     output = []
 
     def fake_print(*args, **kwargs):
         output.append(" ".join(str(arg) for arg in args))
 
     with patch("builtins.print", side_effect=fake_print):
-        with patch("cli.create_project", return_value=(True, "Created python project: /tmp/example")):
-            cli.create_project_mode("utility script", project_type="python")
+        with patch("cli.set_project_state") as mocked_set_project_state:
+            with patch("cli.create_project", return_value=(True, "Created python project: /tmp/example")):
+                cli.create_project_mode("utility script", project_type="python")
 
     rendered = "\n".join(output)
 
     assert "[WEB BLUEPRINT]" not in rendered
     assert "Created python project" in rendered
     assert "[OK]" in rendered
+    mocked_set_project_state.assert_not_called()
 
 
 def test_choose_web_app_blueprint_handles_underscored_ordering_request():
