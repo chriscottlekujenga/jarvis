@@ -42,7 +42,6 @@ def test_py_compile_usefulness_fails_when_command_failed():
     assert "py_compile target_exists=False" in msg
 
 
-print("PASS: task usefulness validation")
 
 
 def test_python_script_usefulness_passes_for_existing_script():
@@ -77,3 +76,24 @@ def test_python_script_usefulness_fails_on_traceback():
     )
     assert not ok
     assert "traceback=True" in msg
+
+
+def run_tests():
+    test_items = [
+        (name, fn)
+        for name, fn in sorted(globals().items())
+        if name.startswith("test_") and callable(fn)
+    ]
+
+    for name, fn in test_items:
+        try:
+            fn()
+        except Exception:
+            print(f"FAILED TEST: {name}")
+            raise
+
+    print(f"PASS: task usefulness validation ({len(test_items)} tests)")
+
+
+if __name__ == "__main__":
+    run_tests()

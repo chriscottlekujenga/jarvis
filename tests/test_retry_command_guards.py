@@ -17,7 +17,6 @@ def test_normal_retry_command_is_allowed():
     assert not executor.retry_command_has_placeholder("python3 -m py_compile cli.py")
 
 
-print("PASS: retry command placeholder guards")
 
 
 def test_deterministic_retry_repairs_relative_core_py_compile():
@@ -42,3 +41,24 @@ def test_deterministic_retry_ignores_unrelated_errors():
         "SyntaxError: invalid syntax",
     )
     assert fixed == ""
+
+
+def run_tests():
+    test_items = [
+        (name, fn)
+        for name, fn in sorted(globals().items())
+        if name.startswith("test_") and callable(fn)
+    ]
+
+    for name, fn in test_items:
+        try:
+            fn()
+        except Exception:
+            print(f"FAILED TEST: {name}")
+            raise
+
+    print(f"PASS: retry command placeholder guards ({len(test_items)} tests)")
+
+
+if __name__ == "__main__":
+    run_tests()

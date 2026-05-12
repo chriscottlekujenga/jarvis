@@ -48,7 +48,6 @@ def test_context_step_without_self_request_targets_project_main_script():
     assert normalized[0].startswith(f"edit {PROJECT_ROOT}/rename_files.py to ")
 
 
-print("PASS: edit targeting guards")
 
 
 def test_project_request_ignores_llm_chosen_core_file():
@@ -61,9 +60,12 @@ def test_project_request_ignores_llm_chosen_core_file():
 
 def test_jarvis_self_request_can_target_core_file():
     setup_context()
-    steps = ["edit cli.py to improve retry logic"]
-    normalized = cli.normalize_context_steps(steps, "improve Jarvis retry logic")
-    assert normalized == [f"edit {APP_ROOT}/cli.py to improve retry logic"]
+    steps = ["edit cli.py to add retry failure classification"]
+    normalized = cli.normalize_context_steps(
+        steps,
+        "continue edit Jarvis cli.py to add retry failure classification",
+    )
+    assert normalized == [f"edit {APP_ROOT}/cli.py to add retry failure classification"]
 
 
 def test_explicit_project_file_request_targets_project_even_in_context_mode():
@@ -205,3 +207,23 @@ def test_strip_model_edit_artifacts_still_available_after_heading_helpers():
     cleaned = cli.strip_model_edit_artifacts(raw, "/tmp/index.html")
     assert cleaned.startswith("<!doctype html>")
 
+
+def run_tests():
+    test_items = [
+        (name, fn)
+        for name, fn in sorted(globals().items())
+        if name.startswith("test_") and callable(fn)
+    ]
+
+    for name, fn in test_items:
+        try:
+            fn()
+        except Exception:
+            print(f"FAILED TEST: {name}")
+            raise
+
+    print(f"PASS: edit targeting guards ({len(test_items)} tests)")
+
+
+if __name__ == "__main__":
+    run_tests()

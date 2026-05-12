@@ -195,7 +195,6 @@ def test_run_project_script_fallback_fails_for_broken_web_project():
         assert not cli.run_project_script()
 
 
-print("PASS: project creation flow")
 
 def test_infer_project_type_from_main_script_detects_web():
     assert cli.infer_project_type_from_main_script("index.html") == "web"
@@ -205,3 +204,24 @@ def test_infer_project_type_from_main_script_detects_web():
 def test_infer_project_type_from_main_script_defaults_to_python():
     assert cli.infer_project_type_from_main_script("app.py") == "python"
     assert cli.infer_project_type_from_main_script("rename_files.py") == "python"
+
+
+def run_tests():
+    test_items = [
+        (name, fn)
+        for name, fn in sorted(globals().items())
+        if name.startswith("test_") and callable(fn)
+    ]
+
+    for name, fn in test_items:
+        try:
+            fn()
+        except Exception:
+            print(f"FAILED TEST: {name}")
+            raise
+
+    print(f"PASS: project creation flow ({len(test_items)} tests)")
+
+
+if __name__ == "__main__":
+    run_tests()
