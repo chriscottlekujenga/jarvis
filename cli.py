@@ -1017,9 +1017,6 @@ def instruction_mentions_entrypoint(instruction):
     return any(keyword in lowered for keyword in entry_keywords)
 
 
-def strip_model_edit_artifacts(text, file_path=""):
-    if text is None:
-        return text
 def extract_requested_heading_text(instruction):
     if not instruction:
         return None
