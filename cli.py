@@ -2751,6 +2751,50 @@ def write_scaffold_files(project_root, scaffold):
             write_file_text(target_path, content)
 
 
+def validate_consultative_sales_app_scaffold(project_root):
+    required_paths = [
+        "frontend/index.html",
+        "frontend/styles.css",
+        "frontend/script.js",
+        "backend/app.py",
+        "prompts/sales_reasoning_system.txt",
+        "prompts/next_question_prompt.txt",
+        "prompts/proposal_generation_prompt.txt",
+        "service_modules/lean_consulting.json",
+        "schemas/session_state.json",
+        "schemas/proposal_output.json",
+        ".env.example",
+    ]
+
+    for relative_path in required_paths:
+        if not os.path.exists(os.path.join(project_root, relative_path)):
+            return False, f"missing AI scaffold file {relative_path}"
+
+    env_text = read_file_text(os.path.join(project_root, ".env.example"))
+    if "OPENAI_API_KEY=" not in env_text:
+        return False, "missing OPENAI_API_KEY in .env.example"
+
+    service_module_text = read_file_text(os.path.join(project_root, "service_modules/lean_consulting.json"))
+    if "lean_consulting" not in service_module_text:
+        return False, "missing lean_consulting service module marker"
+
+    frontend_text = read_file_text(os.path.join(project_root, "frontend/index.html"))
+    if "AI Consultative Sales Platform" not in frontend_text:
+        return False, "missing AI consultative sales frontend marker"
+
+    compile_result = subprocess.run(
+        ["python3", "-m", "py_compile", "backend/app.py"],
+        cwd=project_root,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    if compile_result.returncode != 0:
+        return False, compile_result.stderr.strip() or "backend app compile failed"
+
+    return True, "AI consultative sales scaffold validation passed"
+
+
 def create_project(project_name, projects_root=None, project_type="python"):
     clean_name = sanitize_project_name(project_name)
     if not clean_name:
@@ -2798,6 +2842,9 @@ def create_project(project_name, projects_root=None, project_type="python"):
 
         if blueprint_name == "consultative_sales_platform":
             write_scaffold_files(project_root, build_consultative_sales_app_scaffold(project_name))
+            scaffold_ok, scaffold_message = validate_consultative_sales_app_scaffold(project_root)
+            if not scaffold_ok:
+                return False, scaffold_message
 
     if not os.path.exists(readme_path):
         write_file_text(readme_path, f"# {clean_name}\n\nCreated by Jarvis as a {project_type} project.\n")

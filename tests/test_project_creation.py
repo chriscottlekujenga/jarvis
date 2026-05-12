@@ -484,6 +484,41 @@ def test_create_web_project_scaffolds_consultative_sales_platform_files():
         assert "AI Consultative Sales Platform" in Path(os.path.join(project_root, "frontend/index.html")).read_text()
         assert "lean_consulting" in Path(os.path.join(project_root, "service_modules/lean_consulting.json")).read_text()
 
+
+def test_validate_consultative_sales_app_scaffold_passes_for_generated_scaffold():
+    with tempfile.TemporaryDirectory() as tmp:
+        scaffold = cli.build_consultative_sales_app_scaffold("lean_consulting_ai_sales_advisor")
+        cli.write_scaffold_files(tmp, scaffold)
+
+        ok, message = cli.validate_consultative_sales_app_scaffold(tmp)
+
+        assert ok, message
+        assert "validation passed" in message.lower()
+
+
+def test_validate_consultative_sales_app_scaffold_fails_when_env_key_missing():
+    with tempfile.TemporaryDirectory() as tmp:
+        scaffold = cli.build_consultative_sales_app_scaffold("lean_consulting_ai_sales_advisor")
+        scaffold[".env.example"] = "AI_MODEL=gpt-4.1-mini\nAPP_ENV=development\n"
+        cli.write_scaffold_files(tmp, scaffold)
+
+        ok, message = cli.validate_consultative_sales_app_scaffold(tmp)
+
+        assert not ok
+        assert "OPENAI_API_KEY" in message
+
+
+def test_create_web_project_rejects_invalid_consultative_sales_scaffold():
+    with tempfile.TemporaryDirectory() as tmp:
+        broken_scaffold = cli.build_consultative_sales_app_scaffold("lean_consulting_ai_sales_advisor")
+        broken_scaffold.pop("backend/app.py")
+
+        with patch("cli.build_consultative_sales_app_scaffold", return_value=broken_scaffold):
+            ok, message = cli.create_project("Lean Consulting AI Sales Advisor", projects_root=tmp, project_type="web")
+
+        assert not ok
+        assert "missing AI scaffold file backend/app.py" in message
+
 def run_tests():
     test_items = [
         (name, fn)
