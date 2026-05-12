@@ -432,6 +432,58 @@ def test_create_web_project_uses_dashboard_template_for_dashboard_request():
         assert "dashboard app ready" in script_text
 
 
+
+def test_build_consultative_sales_app_scaffold_creates_expected_files():
+    scaffold = cli.build_consultative_sales_app_scaffold("lean_consulting_ai_sales_advisor")
+
+    expected_paths = {
+        "frontend/index.html",
+        "frontend/styles.css",
+        "frontend/script.js",
+        "backend/app.py",
+        "prompts/sales_reasoning_system.txt",
+        "prompts/next_question_prompt.txt",
+        "prompts/proposal_generation_prompt.txt",
+        "service_modules/lean_consulting.json",
+        "schemas/session_state.json",
+        "schemas/proposal_output.json",
+        ".env.example",
+    }
+
+    assert expected_paths.issubset(set(scaffold))
+    assert "AI Consultative Sales Platform" in scaffold["frontend/index.html"]
+    assert "OPENAI_API_KEY" in scaffold[".env.example"]
+    assert "lean_consulting" in scaffold["service_modules/lean_consulting.json"]
+
+
+def test_create_web_project_scaffolds_consultative_sales_platform_files():
+    with tempfile.TemporaryDirectory() as tmp:
+        ok, message = cli.create_project("Lean Consulting AI Sales Advisor", projects_root=tmp, project_type="web")
+        assert ok, message
+
+        project_root = os.path.join(tmp, "lean_consulting_ai_sales_advisor")
+
+        expected_paths = [
+            "frontend/index.html",
+            "frontend/styles.css",
+            "frontend/script.js",
+            "backend/app.py",
+            "prompts/sales_reasoning_system.txt",
+            "prompts/next_question_prompt.txt",
+            "prompts/proposal_generation_prompt.txt",
+            "service_modules/lean_consulting.json",
+            "schemas/session_state.json",
+            "schemas/proposal_output.json",
+            ".env.example",
+        ]
+
+        for relative_path in expected_paths:
+            assert os.path.exists(os.path.join(project_root, relative_path)), relative_path
+
+        assert "OPENAI_API_KEY" in Path(os.path.join(project_root, ".env.example")).read_text()
+        assert "AI Consultative Sales Platform" in Path(os.path.join(project_root, "frontend/index.html")).read_text()
+        assert "lean_consulting" in Path(os.path.join(project_root, "service_modules/lean_consulting.json")).read_text()
+
 def run_tests():
     test_items = [
         (name, fn)

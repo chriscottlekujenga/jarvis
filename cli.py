@@ -2724,6 +2724,33 @@ def build_web_project_templates(project_name, blueprint_name=None):
     }
 
 
+def build_consultative_sales_app_scaffold(project_name):
+    clean_name = sanitize_project_name(project_name)
+    title = clean_name.replace("_", " ").title() or "AI Consultative Sales Platform"
+
+    return {
+        "frontend/index.html": '<!doctype html>\n<html lang="en">\n<head>\n  <meta charset="utf-8">\n  <meta name="viewport" content="width=device-width, initial-scale=1">\n  <title>{title}</title>\n  <link rel="stylesheet" href="styles.css">\n</head>\n<body>\n  <main>\n    <section class="hero">\n      <p class="eyebrow">AI Consultative Sales Platform</p>\n      <h1>{title}</h1>\n      <p>Interview prospects, detect pain and buying intent, and prepare personalized service proposals.</p>\n    </section>\n    <section class="interview-shell" aria-label="Sales discovery interview">\n      <h2>Discovery Session</h2>\n      <p id="current-question">What operational challenge would make this conversation valuable?</p>\n      <textarea id="prospect-answer" rows="5" placeholder="Type the prospect answer here"></textarea>\n      <button id="next-question" type="button">Generate Next Question</button>\n      <pre id="session-status">Session state will appear here.</pre>\n    </section>\n  </main>\n  <script src="script.js"></script>\n</body>\n</html>\n'.format(title=title),
+        "frontend/styles.css": 'body {\n  font-family: system-ui, sans-serif;\n  margin: 0;\n  background: #f6f4ef;\n  color: #1f2933;\n}\n\nmain {\n  max-width: 1080px;\n  margin: 0 auto;\n  padding: 2rem;\n}\n\n.hero {\n  padding: 4rem 0 2rem;\n}\n\n.eyebrow {\n  text-transform: uppercase;\n  letter-spacing: 0.12em;\n  font-weight: 700;\n}\n\n.interview-shell {\n  background: white;\n  border-radius: 1rem;\n  padding: 1.25rem;\n}\n\ntextarea {\n  display: block;\n  width: 100%;\n  margin: 1rem 0;\n}\n',
+        "frontend/script.js": 'document.addEventListener("DOMContentLoaded", () => {\n  const status = document.getElementById("session-status");\n  const button = document.getElementById("next-question");\n\n  button.addEventListener("click", () => {\n    status.textContent = "Next-question API wiring will be added after scaffold validation.";\n  });\n\n  console.log("Jarvis consultative sales platform ready");\n});\n',
+        "backend/app.py": 'import os\n\n\ndef main():\n    api_key = os.environ.get("OPENAI_API_KEY", "")\n    if not api_key:\n        print("AI API key not configured. Copy .env.example to .env and set OPENAI_API_KEY.")\n        return\n    print("Consultative sales backend ready.")\n\n\nif __name__ == "__main__":\n    main()\n',
+        "prompts/sales_reasoning_system.txt": "Maintain a consultative sales role. Detect pain, urgency, buying intent, and the best next sales move using the active service module.\n",
+        "prompts/next_question_prompt.txt": "Generate the next high-leverage discovery question based on session state, previous answers, and the active service module.\n",
+        "prompts/proposal_generation_prompt.txt": "Generate a personalized proposal only after proposal readiness is high enough.\n",
+        "service_modules/lean_consulting.json": '{\n  "service_key": "lean_consulting",\n  "service_name": "Lean Consulting",\n  "pain_models": [\n    "firefighting",\n    "poor flow",\n    "low OEE",\n    "missed delivery dates",\n    "quality issues",\n    "leadership misalignment",\n    "weak standard work"\n  ],\n  "buying_intent_signals": [\n    "specific operational pain",\n    "financial impact described",\n    "urgency or deadline",\n    "leadership support",\n    "prior failed improvement attempts"\n  ],\n  "offer_types": [\n    "operational assessment",\n    "leadership workshop",\n    "transformation roadmap",\n    "coaching engagement",\n    "implementation support"\n  ]\n}\n',
+        "schemas/session_state.json": '{\n  "prospect_name": "",\n  "company_name": "",\n  "known_pains": [],\n  "pain_score": 0,\n  "urgency_score": 0,\n  "buying_intent_score": 0,\n  "proposal_readiness_score": 0,\n  "previous_answers": [],\n  "recommended_next_action": ""\n}\n',
+        "schemas/proposal_output.json": '{\n  "proposal_title": "",\n  "diagnosed_pains": [],\n  "recommended_offer": "",\n  "expected_outcomes": [],\n  "next_step": ""\n}\n',
+        ".env.example": "OPENAI_API_KEY=\nAI_MODEL=gpt-4.1-mini\nAPP_ENV=development\n",
+    }
+
+
+def write_scaffold_files(project_root, scaffold):
+    for relative_path, content in scaffold.items():
+        target_path = os.path.join(project_root, relative_path)
+        os.makedirs(os.path.dirname(target_path), exist_ok=True)
+        if not os.path.exists(target_path):
+            write_file_text(target_path, content)
+
+
 def create_project(project_name, projects_root=None, project_type="python"):
     clean_name = sanitize_project_name(project_name)
     if not clean_name:
@@ -2759,7 +2786,8 @@ def create_project(project_name, projects_root=None, project_type="python"):
         styles_path = os.path.join(project_root, "styles.css")
         script_path = os.path.join(project_root, "script.js")
 
-        templates = build_web_project_templates(project_name)
+        blueprint_name = choose_web_app_blueprint(project_name)["name"]
+        templates = build_web_project_templates(project_name, blueprint_name)
 
         if not os.path.exists(index_path):
             write_file_text(index_path, templates["index"])
@@ -2767,6 +2795,9 @@ def create_project(project_name, projects_root=None, project_type="python"):
             write_file_text(styles_path, templates["styles"])
         if not os.path.exists(script_path):
             write_file_text(script_path, templates["script"])
+
+        if blueprint_name == "consultative_sales_platform":
+            write_scaffold_files(project_root, build_consultative_sales_app_scaffold(project_name))
 
     if not os.path.exists(readme_path):
         write_file_text(readme_path, f"# {clean_name}\n\nCreated by Jarvis as a {project_type} project.\n")
