@@ -330,6 +330,37 @@ def test_context_mode_passes_web_blueprint_state_to_context_planner():
     assert "web_blueprint_reason:" in captured["project_state"]
 
 
+def test_web_template_builder_function_exists():
+    assert callable(getattr(cli, "build_web_project_templates", None))
+
+
+def test_build_web_project_templates_creates_product_storefront_content():
+    templates = cli.build_web_project_templates("bakery_ordering_smoke", "product_storefront")
+
+    assert "Product Storefront" in templates["index"]
+    assert "View Products" in templates["index"]
+    assert "product-grid" in templates["index"]
+    assert "product-card" in templates["styles"]
+    assert "product storefront ready" in templates["script"]
+
+
+def test_create_web_project_uses_product_storefront_template_for_ordering_request():
+    with tempfile.TemporaryDirectory() as tmp:
+        ok, message = cli.create_project("Bakery Ordering", projects_root=tmp, project_type="web")
+        assert ok, message
+
+        project_root = os.path.join(tmp, "bakery_ordering")
+        index_text = Path(os.path.join(project_root, "index.html")).read_text()
+        styles_text = Path(os.path.join(project_root, "styles.css")).read_text()
+        script_text = Path(os.path.join(project_root, "script.js")).read_text()
+
+        assert "Product Storefront" in index_text
+        assert "View Products" in index_text
+        assert "product-grid" in index_text
+        assert "product-card" in styles_text
+        assert "product storefront ready" in script_text
+
+
 def run_tests():
     test_items = [
         (name, fn)

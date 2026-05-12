@@ -2672,6 +2672,25 @@ def infer_project_type_from_main_script(main_script_name):
     return "python"
 
 
+
+def build_web_project_templates(project_name, blueprint_name=None):
+    blueprint_name = blueprint_name or choose_web_app_blueprint(project_name)["name"]
+    title = sanitize_project_name(project_name).replace("_", " ").title() or "Jarvis Web Project"
+
+    if blueprint_name == "product_storefront":
+        return {
+            "index": '<!doctype html>\n<html lang="en">\n<head>\n  <meta charset="utf-8">\n  <meta name="viewport" content="width=device-width, initial-scale=1">\n  <title>{title} Storefront</title>\n  <link rel="stylesheet" href="styles.css">\n</head>\n<body>\n  <main>\n    <section class="hero">\n      <p class="eyebrow">Product Storefront</p>\n      <h1>{title}</h1>\n      <p>Showcase products, pricing, and simple ordering calls-to-action.</p>\n      <a class="button" href="#products">View Products</a>\n    </section>\n    <section id="products" class="product-grid" aria-label="Featured products">\n      <article class="product-card">\n        <h2>Featured Product</h2>\n        <p>Add product details, pricing, and ordering information here.</p>\n        <button type="button">Start Order</button>\n      </article>\n    </section>\n  </main>\n  <script src="script.js"></script>\n</body>\n</html>\n'.format(title=title),
+            "styles": 'body {\n  font-family: system-ui, sans-serif;\n  margin: 0;\n  background: #f8f8f5;\n  color: #1f2933;\n}\n\nmain {\n  max-width: 1080px;\n  margin: 0 auto;\n  padding: 2rem;\n}\n\n.hero {\n  padding: 4rem 0;\n}\n\n.eyebrow {\n  text-transform: uppercase;\n  letter-spacing: 0.12em;\n  font-weight: 700;\n}\n\n.button,\nbutton {\n  display: inline-block;\n  border: 0;\n  border-radius: 999px;\n  padding: 0.75rem 1rem;\n  cursor: pointer;\n}\n\n.product-grid {\n  display: grid;\n  gap: 1rem;\n}\n\n.product-card {\n  background: white;\n  border-radius: 1rem;\n  padding: 1.25rem;\n}\n',
+            "script": 'document.addEventListener("DOMContentLoaded", () => {\n  console.log("Jarvis product storefront ready");\n});\n',
+        }
+
+    return {
+        "index": '<!doctype html>\n<html lang="en">\n<head>\n  <meta charset="utf-8">\n  <meta name="viewport" content="width=device-width, initial-scale=1">\n  <title>{title}</title>\n  <link rel="stylesheet" href="styles.css">\n</head>\n<body>\n  <main>\n    <section class="hero">\n      <p class="eyebrow">Jarvis Web Project</p>\n      <h1>{title}</h1>\n      <p>A clean starting point for a focused web project.</p>\n    </section>\n  </main>\n  <script src="script.js"></script>\n</body>\n</html>\n'.format(title=title),
+        "styles": 'body {\n  font-family: system-ui, sans-serif;\n  margin: 0;\n  background: #f8f8f5;\n  color: #1f2933;\n}\n\nmain {\n  max-width: 1080px;\n  margin: 0 auto;\n  padding: 2rem;\n}\n\n.hero {\n  padding: 4rem 0;\n}\n',
+        "script": 'document.addEventListener("DOMContentLoaded", () => {\n  console.log("Jarvis web project ready");\n});\n',
+    }
+
+
 def create_project(project_name, projects_root=None, project_type="python"):
     clean_name = sanitize_project_name(project_name)
     if not clean_name:
@@ -2707,12 +2726,14 @@ def create_project(project_name, projects_root=None, project_type="python"):
         styles_path = os.path.join(project_root, "styles.css")
         script_path = os.path.join(project_root, "script.js")
 
+        templates = build_web_project_templates(project_name)
+
         if not os.path.exists(index_path):
-            write_file_text(index_path, '<!doctype html>\n<html lang="en">\n<head>\n  <meta charset="utf-8">\n  <meta name="viewport" content="width=device-width, initial-scale=1">\n  <title>Jarvis Web Project</title>\n  <link rel="stylesheet" href="styles.css">\n</head>\n<body>\n  <main>\n    <h1>Hello from Jarvis</h1>\n  </main>\n  <script src="script.js"></script>\n</body>\n</html>\n')
+            write_file_text(index_path, templates["index"])
         if not os.path.exists(styles_path):
-            write_file_text(styles_path, 'body {\n  font-family: system-ui, sans-serif;\n  margin: 2rem;\n}\n')
+            write_file_text(styles_path, templates["styles"])
         if not os.path.exists(script_path):
-            write_file_text(script_path, 'console.log("Jarvis web project ready");\n')
+            write_file_text(script_path, templates["script"])
 
     if not os.path.exists(readme_path):
         write_file_text(readme_path, f"# {clean_name}\n\nCreated by Jarvis as a {project_type} project.\n")
