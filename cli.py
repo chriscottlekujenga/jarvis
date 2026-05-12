@@ -682,6 +682,7 @@ WEB_APP_BLUEPRINTS = {
     "dashboard_app": "Data/status app with metrics, panels, filters, and management views.",
     "workflow_tool": "Interactive utility app for completing tasks, forms, calculators, planning, or operational workflows.",
     "content_portal": "Content-heavy site for articles, lessons, resources, guides, or searchable information.",
+    "consultative_sales_platform": "AI-guided sales discovery app that interviews prospects, detects pain and buying intent, and generates service proposals.",
 }
 
 
@@ -689,6 +690,24 @@ def choose_web_app_blueprint(request_text):
     lowered = re.sub(r"[_-]+", " ", (request_text or "").lower())
 
     scoring_rules = [
+        (
+            "consultative_sales_platform",
+            [
+                "ai sales",
+                "consultative sales",
+                "sales discovery",
+                "proposal generation",
+                "buying intent",
+                "pain detection",
+                "lead qualification",
+                "service business",
+                "prospect interview",
+                "ai guided sales",
+                "sales reasoning",
+                "dynamic proposal",
+            ],
+            "The request emphasizes AI-guided sales discovery, buying intent detection, and proposal generation.",
+        ),
         (
             "dashboard_app",
             ["dashboard", "metrics", "analytics", "report", "reports", "admin", "kpi", "status", "chart", "charts"],

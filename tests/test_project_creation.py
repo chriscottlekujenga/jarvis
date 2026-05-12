@@ -207,6 +207,24 @@ def test_infer_project_type_from_main_script_defaults_to_python():
     assert cli.infer_project_type_from_main_script("rename_files.py") == "python"
 
 
+
+def test_choose_web_app_blueprint_selects_consultative_sales_platform():
+    selected = cli.choose_web_app_blueprint(
+        "Build an AI consultative sales discovery app with pain detection, buying intent, and proposal generation"
+    )
+
+    assert selected["name"] == "consultative_sales_platform"
+    assert "sales discovery" in selected["description"].lower()
+    assert "buying intent" in selected["reason"].lower()
+
+
+def test_choose_web_app_blueprint_selects_consultative_sales_platform_for_lean_sales_advisor():
+    selected = cli.choose_web_app_blueprint(
+        "Create a Lean consulting AI sales advisor that interviews prospects and generates proposals"
+    )
+
+    assert selected["name"] == "consultative_sales_platform"
+
 def test_choose_web_app_blueprint_selects_storefront():
     selected = cli.choose_web_app_blueprint("Build a web app storefront with products, pricing, and checkout")
     assert selected["name"] == "product_storefront"
