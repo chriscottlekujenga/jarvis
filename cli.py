@@ -674,6 +674,66 @@ def infer_jarvis_target_file(text):
 
 
 
+
+
+WEB_APP_BLUEPRINTS = {
+    "small_business_landing": "Customer-facing business site with credibility, services/products, and a clear contact or booking call-to-action.",
+    "product_storefront": "Product-focused site with catalog, pricing, product cards, and purchase/order calls-to-action.",
+    "dashboard_app": "Data/status app with metrics, panels, filters, and management views.",
+    "workflow_tool": "Interactive utility app for completing tasks, forms, calculators, planning, or operational workflows.",
+    "content_portal": "Content-heavy site for articles, lessons, resources, guides, or searchable information.",
+}
+
+
+def choose_web_app_blueprint(request_text):
+    lowered = (request_text or "").lower()
+
+    scoring_rules = [
+        (
+            "dashboard_app",
+            ["dashboard", "metrics", "analytics", "report", "reports", "admin", "kpi", "status", "chart", "charts"],
+            "The request emphasizes metrics, status, reporting, or management views.",
+        ),
+        (
+            "workflow_tool",
+            ["tool", "calculator", "planner", "tracker", "form", "workflow", "checklist", "wizard", "generate", "input"],
+            "The request emphasizes user interaction, task completion, forms, or workflow support.",
+        ),
+        (
+            "product_storefront",
+            ["store", "shop", "storefront", "product", "products", "cart", "checkout", "order", "pricing", "buy"],
+            "The request emphasizes products, ordering, pricing, or purchase flow.",
+        ),
+        (
+            "content_portal",
+            ["blog", "articles", "lessons", "course", "resources", "library", "portal", "guide", "guides", "search"],
+            "The request emphasizes content, education, resources, or searchable information.",
+        ),
+        (
+            "small_business_landing",
+            ["business", "service", "services", "restaurant", "bakery", "consulting", "contact", "book", "booking", "landing"],
+            "The request describes a customer-facing business presence with credibility and a clear call-to-action.",
+        ),
+    ]
+
+    best_name = "small_business_landing"
+    best_score = 0
+    best_reason = "Defaulted to a flexible customer-facing landing page because no stronger app pattern was detected."
+
+    for name, keywords, reason in scoring_rules:
+        score = sum(1 for keyword in keywords if re.search(r"\b" + re.escape(keyword) + r"\b", lowered))
+        if score > best_score:
+            best_name = name
+            best_score = score
+            best_reason = reason
+
+    return {
+        "name": best_name,
+        "description": WEB_APP_BLUEPRINTS[best_name],
+        "reason": best_reason,
+    }
+
+
 def route_web_edit_target_from_text(step_text="", instruction_text="", request_text=""):
     project_type = get_project_state("project_type")
     project_root = get_project_state("project_root")

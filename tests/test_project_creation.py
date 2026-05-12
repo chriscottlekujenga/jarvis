@@ -206,6 +206,36 @@ def test_infer_project_type_from_main_script_defaults_to_python():
     assert cli.infer_project_type_from_main_script("rename_files.py") == "python"
 
 
+def test_choose_web_app_blueprint_selects_storefront():
+    selected = cli.choose_web_app_blueprint("Build a web app storefront with products, pricing, and checkout")
+    assert selected["name"] == "product_storefront"
+    assert "product" in selected["description"].lower()
+
+
+def test_choose_web_app_blueprint_selects_dashboard():
+    selected = cli.choose_web_app_blueprint("Build an admin dashboard with metrics, charts, and KPI status")
+    assert selected["name"] == "dashboard_app"
+    assert "metrics" in selected["description"].lower()
+
+
+def test_choose_web_app_blueprint_selects_workflow_tool():
+    selected = cli.choose_web_app_blueprint("Build a calculator tool with a form and generated plan")
+    assert selected["name"] == "workflow_tool"
+    assert "workflow" in selected["description"].lower()
+
+
+def test_choose_web_app_blueprint_selects_content_portal():
+    selected = cli.choose_web_app_blueprint("Build a course portal with lessons, guides, and searchable resources")
+    assert selected["name"] == "content_portal"
+    assert "content" in selected["description"].lower()
+
+
+def test_choose_web_app_blueprint_defaults_to_small_business_landing():
+    selected = cli.choose_web_app_blueprint("Build a simple website for a local bakery")
+    assert selected["name"] == "small_business_landing"
+    assert "business" in selected["description"].lower()
+
+
 def run_tests():
     test_items = [
         (name, fn)
