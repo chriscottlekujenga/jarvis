@@ -686,7 +686,7 @@ WEB_APP_BLUEPRINTS = {
 
 
 def choose_web_app_blueprint(request_text):
-    lowered = (request_text or "").lower()
+    lowered = re.sub(r"[_-]+", " ", (request_text or "").lower())
 
     scoring_rules = [
         (
@@ -701,7 +701,7 @@ def choose_web_app_blueprint(request_text):
         ),
         (
             "product_storefront",
-            ["store", "shop", "storefront", "product", "products", "cart", "checkout", "order", "pricing", "buy"],
+            ["store", "shop", "storefront", "product", "products", "cart", "checkout", "order", "orders", "ordering", "pricing", "buy"],
             "The request emphasizes products, ordering, pricing, or purchase flow.",
         ),
         (

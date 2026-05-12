@@ -273,6 +273,11 @@ def test_create_project_mode_does_not_print_blueprint_for_python_project():
     assert "[OK]" in rendered
 
 
+def test_choose_web_app_blueprint_handles_underscored_ordering_request():
+    selected = cli.choose_web_app_blueprint("bakery_ordering_smoke")
+    assert selected["name"] == "product_storefront"
+
+
 def run_tests():
     test_items = [
         (name, fn)
