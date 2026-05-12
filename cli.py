@@ -2733,10 +2733,10 @@ def build_consultative_sales_app_scaffold(project_name):
         "frontend/styles.css": 'body {\n  font-family: system-ui, sans-serif;\n  margin: 0;\n  background: #f6f4ef;\n  color: #1f2933;\n}\n\nmain {\n  max-width: 1080px;\n  margin: 0 auto;\n  padding: 2rem;\n}\n\n.hero {\n  padding: 4rem 0 2rem;\n}\n\n.eyebrow {\n  text-transform: uppercase;\n  letter-spacing: 0.12em;\n  font-weight: 700;\n}\n\n.interview-shell {\n  background: white;\n  border-radius: 1rem;\n  padding: 1.25rem;\n}\n\ntextarea {\n  display: block;\n  width: 100%;\n  margin: 1rem 0;\n}\n',
         "frontend/script.js": 'document.addEventListener("DOMContentLoaded", () => {\n  const status = document.getElementById("session-status");\n  const button = document.getElementById("next-question");\n\n  button.addEventListener("click", () => {\n    status.textContent = "Next-question API wiring will be added after scaffold validation.";\n  });\n\n  console.log("Jarvis consultative sales platform ready");\n});\n',
         "backend/app.py": 'import os\n\n\ndef main():\n    api_key = os.environ.get("OPENAI_API_KEY", "")\n    if not api_key:\n        print("AI API key not configured. Copy .env.example to .env and set OPENAI_API_KEY.")\n        return\n    print("Consultative sales backend ready.")\n\n\nif __name__ == "__main__":\n    main()\n',
-        "prompts/sales_reasoning_system.txt": "Maintain a consultative sales role. Detect pain, urgency, buying intent, and the best next sales move using the active service module.\n",
-        "prompts/next_question_prompt.txt": "Generate the next high-leverage discovery question based on session state, previous answers, and the active service module.\n",
-        "prompts/proposal_generation_prompt.txt": "Generate a personalized proposal only after proposal readiness is high enough.\n",
-        "service_modules/lean_consulting.json": '{\n  "service_key": "lean_consulting",\n  "service_name": "Lean Consulting",\n  "pain_models": [\n    "firefighting",\n    "poor flow",\n    "low OEE",\n    "missed delivery dates",\n    "quality issues",\n    "leadership misalignment",\n    "weak standard work"\n  ],\n  "buying_intent_signals": [\n    "specific operational pain",\n    "financial impact described",\n    "urgency or deadline",\n    "leadership support",\n    "prior failed improvement attempts"\n  ],\n  "offer_types": [\n    "operational assessment",\n    "leadership workshop",\n    "transformation roadmap",\n    "coaching engagement",\n    "implementation support"\n  ]\n}\n',
+        "prompts/sales_reasoning_system.txt": "You are the sales reasoning engine for a reusable AI consultative sales platform.\n\nYour job is to evaluate each prospect answer using the active service module.\n\nTrack and update:\n- known pains\n- pain severity\n- urgency\n- buying intent\n- budget clarity\n- decision authority\n- timeline\n- proposal readiness\n\nDo not act like a generic chatbot. Act like a consultative sales expert who helps the prospect understand the cost of the problem, the value of solving it, and the best next step.\n\nReturn structured reasoning that can be used by the next-question and proposal prompts.\n",
+        "prompts/next_question_prompt.txt": "Generate the next best consultative sales question.\n\nUse:\n- current session state\n- previous answers\n- detected pain\n- urgency score\n- buying intent score\n- active service module\n\nThe next question should do one of these jobs:\n- clarify the pain\n- quantify impact\n- uncover urgency\n- identify decision authority\n- expose failed prior attempts\n- determine proposal readiness\n\nAsk only one strong question at a time.\n",
+        "prompts/proposal_generation_prompt.txt": "Generate a personalized service proposal only when proposal readiness is high enough.\n\nUse the service module, known pains, business impact, urgency, buying intent, and recommended offer type.\n\nProposal sections:\n1. Situation summary\n2. Diagnosed pains\n3. Business impact\n4. Recommended engagement\n5. Expected outcomes\n6. Proposed next step\n\nKeep the proposal specific to the prospect. Do not invent facts that are not in the session state.\n",
+        "service_modules/lean_consulting.json": '{\n  "service_key": "lean_consulting",\n  "service_name": "Lean Consulting",\n  "target_customers": [\n    "manufacturing leaders",\n    "operations leaders",\n    "business owners",\n    "plant managers",\n    "continuous improvement leaders"\n  ],\n  "pain_models": [\n    "firefighting",\n    "poor flow",\n    "low OEE",\n    "missed delivery dates",\n    "quality issues",\n    "leadership misalignment",\n    "weak standard work",\n    "slow change adoption",\n    "waste and rework",\n    "poor accountability systems"\n  ],\n  "buying_intent_signals": [\n    "specific operational pain",\n    "financial impact described",\n    "urgency or deadline",\n    "leadership support",\n    "budget awareness",\n    "prior failed improvement attempts",\n    "desire for outside guidance"\n  ],\n  "offer_types": [\n    "operational assessment",\n    "leadership workshop",\n    "transformation roadmap",\n    "coaching engagement",\n    "implementation support"\n  ],\n  "roi_logic": [\n    "throughput improvement",\n    "lead time reduction",\n    "quality improvement",\n    "productivity gain",\n    "scrap reduction",\n    "employee engagement improvement"\n  ],\n  "proposal_sections": [\n    "situation summary",\n    "diagnosed pains",\n    "business impact",\n    "recommended engagement",\n    "expected outcomes",\n    "next step"\n  ]\n}\n',
         "schemas/session_state.json": '{\n  "prospect_name": "",\n  "company_name": "",\n  "known_pains": [],\n  "pain_score": 0,\n  "urgency_score": 0,\n  "buying_intent_score": 0,\n  "proposal_readiness_score": 0,\n  "previous_answers": [],\n  "recommended_next_action": ""\n}\n',
         "schemas/proposal_output.json": '{\n  "proposal_title": "",\n  "diagnosed_pains": [],\n  "recommended_offer": "",\n  "expected_outcomes": [],\n  "next_step": ""\n}\n',
         ".env.example": "OPENAI_API_KEY=\nAI_MODEL=gpt-4.1-mini\nAPP_ENV=development\n",
@@ -2777,6 +2777,22 @@ def validate_consultative_sales_app_scaffold(project_root):
     service_module_text = read_file_text(os.path.join(project_root, "service_modules/lean_consulting.json"))
     if "lean_consulting" not in service_module_text:
         return False, "missing lean_consulting service module marker"
+    if "roi_logic" not in service_module_text:
+        return False, "missing Lean ROI logic in service module"
+    if "proposal_sections" not in service_module_text:
+        return False, "missing proposal sections in service module"
+
+    sales_reasoning_text = read_file_text(os.path.join(project_root, "prompts/sales_reasoning_system.txt"))
+    if "sales reasoning engine" not in sales_reasoning_text.lower():
+        return False, "missing sales reasoning prompt marker"
+
+    next_question_text = read_file_text(os.path.join(project_root, "prompts/next_question_prompt.txt"))
+    if "one strong question" not in next_question_text.lower():
+        return False, "missing next question prompt guidance"
+
+    proposal_prompt_text = read_file_text(os.path.join(project_root, "prompts/proposal_generation_prompt.txt"))
+    if "proposal readiness" not in proposal_prompt_text.lower():
+        return False, "missing proposal readiness prompt guidance"
 
     frontend_text = read_file_text(os.path.join(project_root, "frontend/index.html"))
     if "AI Consultative Sales Platform" not in frontend_text:

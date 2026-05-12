@@ -454,6 +454,11 @@ def test_build_consultative_sales_app_scaffold_creates_expected_files():
     assert "AI Consultative Sales Platform" in scaffold["frontend/index.html"]
     assert "OPENAI_API_KEY" in scaffold[".env.example"]
     assert "lean_consulting" in scaffold["service_modules/lean_consulting.json"]
+    assert "roi_logic" in scaffold["service_modules/lean_consulting.json"]
+    assert "proposal_sections" in scaffold["service_modules/lean_consulting.json"]
+    assert "sales reasoning engine" in scaffold["prompts/sales_reasoning_system.txt"].lower()
+    assert "one strong question" in scaffold["prompts/next_question_prompt.txt"].lower()
+    assert "proposal readiness" in scaffold["prompts/proposal_generation_prompt.txt"].lower()
 
 
 def test_create_web_project_scaffolds_consultative_sales_platform_files():
@@ -518,6 +523,30 @@ def test_create_web_project_rejects_invalid_consultative_sales_scaffold():
 
         assert not ok
         assert "missing AI scaffold file backend/app.py" in message
+
+
+def test_validate_consultative_sales_app_scaffold_fails_when_roi_logic_missing():
+    with tempfile.TemporaryDirectory() as tmp:
+        scaffold = cli.build_consultative_sales_app_scaffold("lean_consulting_ai_sales_advisor")
+        scaffold["service_modules/lean_consulting.json"] = scaffold["service_modules/lean_consulting.json"].replace('"roi_logic"', '"missing_return_logic"')
+        cli.write_scaffold_files(tmp, scaffold)
+
+        ok, message = cli.validate_consultative_sales_app_scaffold(tmp)
+
+        assert not ok
+        assert "ROI logic" in message
+
+
+def test_validate_consultative_sales_app_scaffold_fails_when_prompt_marker_missing():
+    with tempfile.TemporaryDirectory() as tmp:
+        scaffold = cli.build_consultative_sales_app_scaffold("lean_consulting_ai_sales_advisor")
+        scaffold["prompts/sales_reasoning_system.txt"] = "Generic prompt only.\n"
+        cli.write_scaffold_files(tmp, scaffold)
+
+        ok, message = cli.validate_consultative_sales_app_scaffold(tmp)
+
+        assert not ok
+        assert "sales reasoning prompt" in message
 
 def run_tests():
     test_items = [
