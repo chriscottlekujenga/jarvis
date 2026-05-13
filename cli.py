@@ -2739,6 +2739,9 @@ def build_consultative_sales_app_scaffold(project_name):
         "service_modules/lean_consulting.json": '{\n  "service_key": "lean_consulting",\n  "service_name": "Lean Consulting",\n  "target_customers": [\n    "manufacturing leaders",\n    "operations leaders",\n    "business owners",\n    "plant managers",\n    "continuous improvement leaders"\n  ],\n  "pain_models": [\n    "firefighting",\n    "poor flow",\n    "low OEE",\n    "missed delivery dates",\n    "quality issues",\n    "leadership misalignment",\n    "weak standard work",\n    "slow change adoption",\n    "waste and rework",\n    "poor accountability systems"\n  ],\n  "buying_intent_signals": [\n    "specific operational pain",\n    "financial impact described",\n    "urgency or deadline",\n    "leadership support",\n    "budget awareness",\n    "prior failed improvement attempts",\n    "desire for outside guidance"\n  ],\n  "offer_types": [\n    "operational assessment",\n    "leadership workshop",\n    "transformation roadmap",\n    "coaching engagement",\n    "implementation support"\n  ],\n  "roi_logic": [\n    "throughput improvement",\n    "lead time reduction",\n    "quality improvement",\n    "productivity gain",\n    "scrap reduction",\n    "employee engagement improvement"\n  ],\n  "proposal_sections": [\n    "situation summary",\n    "diagnosed pains",\n    "business impact",\n    "recommended engagement",\n    "expected outcomes",\n    "next step"\n  ]\n}\n',
         "schemas/session_state.json": '{\n  "prospect_name": "",\n  "company_name": "",\n  "known_pains": [],\n  "pain_score": 0,\n  "urgency_score": 0,\n  "buying_intent_score": 0,\n  "proposal_readiness_score": 0,\n  "previous_answers": [],\n  "recommended_next_action": ""\n}\n',
         "schemas/proposal_output.json": '{\n  "proposal_title": "",\n  "diagnosed_pains": [],\n  "recommended_offer": "",\n  "expected_outcomes": [],\n  "next_step": ""\n}\n',
+        "wordpress_embed/embed.html": '<div id="jarvis-consultative-sales-app" data-api-base-url="http://localhost:8080"></div>\n<script src="embed.js"></script>\n',
+        "wordpress_embed/embed.js": '(function () {\n  const mount = document.getElementById("jarvis-consultative-sales-app");\n  if (!mount) { return; }\n  const apiBaseUrl = mount.dataset.apiBaseUrl || "http://localhost:8080";\n  mount.innerHTML = `<section class="jarvis-sales-embed"><h2>AI Consultative Sales Advisor</h2><p id="jarvis-current-question">What operational challenge would make this conversation valuable?</p><textarea id="jarvis-prospect-answer" rows="5" placeholder="Type your answer"></textarea><button id="jarvis-next-question" type="button">Generate Next Question</button><pre id="jarvis-session-status">Ready.</pre></section>`;\n  async function requestNextQuestion(answer) {\n    const response = await fetch(`${apiBaseUrl}/api/next-question`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ answer }) });\n    return response.json();\n  }\n  mount.querySelector("#jarvis-next-question").addEventListener("click", async () => {\n    const answer = mount.querySelector("#jarvis-prospect-answer").value;\n    const status = mount.querySelector("#jarvis-session-status");\n    status.textContent = "Thinking...";\n    try {\n      const data = await requestNextQuestion(answer);\n      mount.querySelector("#jarvis-current-question").textContent = data.next_question || "No next question returned.";\n      status.textContent = JSON.stringify(data, null, 2);\n    } catch (error) {\n      status.textContent = "Unable to reach backend. Check the API base URL and Cloud Run/local backend.";\n    }\n  });\n})();\n',
+        "wordpress_embed/README.md": "# WordPress Embed Kit\n\nPaste the contents of `embed.html` into a WordPress Custom HTML block.\n\nUpdate `data-api-base-url` to point at the deployed Python backend, such as a Google Cloud Run URL.\n\nThis is an embed kit only. It does not convert the backend to PHP.\n",
         ".env.example": "OPENAI_API_KEY=\nAI_MODEL=gpt-4.1-mini\nAPP_ENV=development\n",
     }
 
@@ -2763,6 +2766,9 @@ def validate_consultative_sales_app_scaffold(project_root):
         "service_modules/lean_consulting.json",
         "schemas/session_state.json",
         "schemas/proposal_output.json",
+        "wordpress_embed/embed.html",
+        "wordpress_embed/embed.js",
+        "wordpress_embed/README.md",
         ".env.example",
     ]
 
@@ -2773,6 +2779,14 @@ def validate_consultative_sales_app_scaffold(project_root):
     env_text = read_file_text(os.path.join(project_root, ".env.example"))
     if "OPENAI_API_KEY=" not in env_text:
         return False, "missing OPENAI_API_KEY in .env.example"
+
+    embed_html = read_file_text(os.path.join(project_root, "wordpress_embed/embed.html"))
+    embed_js = read_file_text(os.path.join(project_root, "wordpress_embed/embed.js"))
+    embed_readme = read_file_text(os.path.join(project_root, "wordpress_embed/README.md"))
+    if "jarvis-consultative-sales-app" not in embed_html:
+        return False, "wordpress embed html missing mount point"
+    if "/api/next-question" not in embed_js or "data-api-base-url" not in embed_readme:
+        return False, "wordpress embed kit missing backend contract"
 
     service_module_text = read_file_text(os.path.join(project_root, "service_modules/lean_consulting.json"))
     if "lean_consulting" not in service_module_text:
