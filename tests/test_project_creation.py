@@ -736,7 +736,29 @@ def test_generated_backend_response_builder_contract_runs_directly():
         assert "ready" in result.stdout
         assert "missed delivery dates" in result.stdout
         assert "low OEE" in result.stdout
-    assert "True" in result.stdout
+        assert "True" in result.stdout
+
+
+def test_generated_backend_persists_session_state_across_calls():
+    with tempfile.TemporaryDirectory() as tmp:
+        ok, message = cli.create_project("Lean Consulting AI Sales Advisor", projects_root=tmp, project_type="web")
+        assert ok, message
+
+        project_root = os.path.join(tmp, "lean_consulting_ai_sales_advisor")
+        result = subprocess.run(
+            [
+                "python3",
+                "-c",
+                "import backend.app as app; first = app.build_next_question_response('We have missed delivery dates.'); second = app.build_next_question_response('We also have low OEE.', session_id=first['session_id']); print(first['session_id'] == second['session_id']); print(second['session_state']['buying_intent_score'] >= first['session_state']['buying_intent_score'])",
+            ],
+            cwd=project_root,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+
+        assert result.returncode == 0, result.stderr
+        assert result.stdout.count("True") == 2
 
 
 def test_generated_backend_contains_http_route_contract():
