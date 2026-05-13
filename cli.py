@@ -2951,10 +2951,68 @@ When OPENAI_API_KEY is present, the backend API boundary reports:
 
     ai_mode: api_ready
 
+## Local API route
+
+POST /api/next-question
+
+Request body:
+
+    {{"answer": "We are missing delivery dates because of poor flow."}}
+
+Response includes:
+
+    status
+    service_key
+    next_question
+    session_state
+    matched_signals
+    matched_pains
+    proposal_readiness_score
+    proposal
+    ai_mode
+
+## Run with Docker
+
+Build:
+
+    docker build -t {clean_name} .
+
+Run:
+
+    docker run -p 8080:8080 --env-file .env {clean_name}
+
+## Deploy to Google Cloud Run
+
+Set your project values:
+
+    export PROJECT_ID=your-gcp-project-id
+    export SERVICE_NAME=consultative-sales-api
+    export REGION=us-central1
+
+Deploy:
+
+    bash deploy_cloud_run.sh
+
+After deploy, copy the Cloud Run service URL.
+
+## WordPress embed
+
+Open wordpress_embed/embed.html.
+
+Replace:
+
+    data-api-base-url="http://localhost:8080"
+
+with your Cloud Run backend URL.
+
+Paste the updated embed HTML into a WordPress Custom HTML block.
+
 ## Key files
 
 - backend/app.py contains the reasoning stub, API boundary, proposal readiness scoring, and proposal stub.
 - frontend/script.js contains the frontend/backend contract for POST /api/next-question.
+- wordpress_embed/ contains the WordPress Custom HTML embed kit.
+- Dockerfile and deploy_cloud_run.sh prepare the backend for Cloud Run deployment.
 - prompts/ contains the sales reasoning, next-question, and proposal-generation prompts.
 - service_modules/lean_consulting.json contains the first service module.
 - schemas/ contains session state and proposal output shapes.
