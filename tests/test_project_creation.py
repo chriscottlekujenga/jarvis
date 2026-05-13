@@ -694,6 +694,12 @@ def test_generated_backend_contains_api_boundary_contract():
     assert "call_ai_model" in backend
     assert "build_next_question_response" in backend
     assert "build_proposal_response" in backend
+    assert "import sqlite3" in backend
+    assert "DB_PATH" in backend
+    assert "def init_db" in backend
+    assert "def load_persisted_session_state" in backend
+    assert "def save_persisted_session_state" in backend
+    assert "session_id" in backend
 
 
 def test_validate_consultative_sales_app_scaffold_fails_when_response_builder_missing():
@@ -718,7 +724,7 @@ def test_generated_backend_response_builder_contract_runs_directly():
             [
                 "python3",
                 "-c",
-                "import backend.app as app; response = app.build_next_question_response('We have missed delivery dates and low OEE.'); print(response['status']); print(response['matched_pains']); print(response['session_state']['buying_intent_score'])",
+                "import backend.app as app; response = app.build_next_question_response('We have missed delivery dates and low OEE.'); print(response['status']); print(response['matched_pains']); print(response['session_state']['buying_intent_score']); print(bool(response['session_id']))",
             ],
             cwd=project_root,
             text=True,
@@ -730,6 +736,7 @@ def test_generated_backend_response_builder_contract_runs_directly():
         assert "ready" in result.stdout
         assert "missed delivery dates" in result.stdout
         assert "low OEE" in result.stdout
+    assert "True" in result.stdout
 
 
 def test_generated_backend_contains_http_route_contract():
