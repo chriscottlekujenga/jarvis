@@ -477,13 +477,15 @@ def test_build_consultative_sales_app_scaffold_creates_expected_files():
     assert "generate_proposal_stub" in scaffold["backend/app.py"]
     assert "get_ai_model" in scaffold["backend/app.py"]
     assert "has_api_key" in scaffold["backend/app.py"]
-    assert "call_ai_model_stub" in scaffold["backend/app.py"]
+    assert "call_ai_model" in scaffold["backend/app.py"]
     assert "build_next_question_response" in scaffold["backend/app.py"]
     assert "build_proposal_response" in scaffold["backend/app.py"]
     assert "ConsultativeSalesRequestHandler" in scaffold["backend/app.py"]
     assert "run_server" in scaffold["backend/app.py"]
     assert "/api/next-question" in scaffold["backend/app.py"]
-    assert "localBackendStub" in scaffold["frontend/script.js"]
+    assert "fetch(" in scaffold["frontend/script.js"]
+    assert "/api/next-question" in scaffold["frontend/script.js"]
+    assert "session_state" in scaffold["frontend/script.js"]
     assert "renderBackendResponse" in scaffold["frontend/script.js"]
     assert "requestNextQuestion" in scaffold["frontend/script.js"]
     assert "/api/next-question" in scaffold["frontend/script.js"]
@@ -522,7 +524,7 @@ def test_create_web_project_scaffolds_consultative_sales_platform_files():
         assert "python3 backend/app.py" in readme_text
         assert "ai_mode: local_stub" in readme_text
         assert "ai_mode: api_ready" in readme_text
-        assert "call_ai_model_stub()" in readme_text
+        assert "call_ai_model()" in readme_text
 
 
 def test_validate_consultative_sales_app_scaffold_passes_for_generated_scaffold():
@@ -644,7 +646,7 @@ def test_generated_frontend_script_contains_backend_response_shape():
     assert "service_key" in script
     assert "next_question" in script
     assert "session_state" in script
-    assert "POST /api/next-question" in script
+    assert "/api/next-question" in script
 
 
 def test_validate_consultative_sales_app_scaffold_fails_when_proposal_marker_missing():
@@ -672,13 +674,13 @@ def test_generated_backend_contains_proposal_readiness_contract():
 def test_validate_consultative_sales_app_scaffold_fails_when_api_boundary_marker_missing():
     with tempfile.TemporaryDirectory() as tmp:
         scaffold = cli.build_consultative_sales_app_scaffold("lean_consulting_ai_sales_advisor")
-        scaffold["backend/app.py"] = scaffold["backend/app.py"].replace("call_ai_model_stub", "missing_ai_boundary")
+        scaffold["backend/app.py"] = scaffold["backend/app.py"].replace("call_ai_model", "missing_ai_boundary")
         cli.write_scaffold_files(tmp, scaffold)
 
         ok, message = cli.validate_consultative_sales_app_scaffold(tmp)
 
         assert not ok
-        assert "call_ai_model_stub" in message
+        assert "call_ai_model" in message
 
 
 def test_generated_backend_contains_api_boundary_contract():
@@ -689,7 +691,7 @@ def test_generated_backend_contains_api_boundary_contract():
     assert "AI_MODEL" in backend
     assert "api_ready" in backend
     assert "local_stub" in backend
-    assert "call_ai_model_stub" in backend
+    assert "call_ai_model" in backend
     assert "build_next_question_response" in backend
     assert "build_proposal_response" in backend
 
