@@ -2742,6 +2742,9 @@ def build_consultative_sales_app_scaffold(project_name):
         "wordpress_embed/embed.html": '<div id="jarvis-consultative-sales-app" data-api-base-url="http://localhost:8080"></div>\n<script src="embed.js"></script>\n',
         "wordpress_embed/embed.js": '(function () {\n  const mount = document.getElementById("jarvis-consultative-sales-app");\n  if (!mount) { return; }\n  const apiBaseUrl = mount.dataset.apiBaseUrl || "http://localhost:8080";\n  mount.innerHTML = `<section class="jarvis-sales-embed"><h2>AI Consultative Sales Advisor</h2><p id="jarvis-current-question">What operational challenge would make this conversation valuable?</p><textarea id="jarvis-prospect-answer" rows="5" placeholder="Type your answer"></textarea><button id="jarvis-next-question" type="button">Generate Next Question</button><pre id="jarvis-session-status">Ready.</pre></section>`;\n  async function requestNextQuestion(answer) {\n    const response = await fetch(`${apiBaseUrl}/api/next-question`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ answer }) });\n    return response.json();\n  }\n  mount.querySelector("#jarvis-next-question").addEventListener("click", async () => {\n    const answer = mount.querySelector("#jarvis-prospect-answer").value;\n    const status = mount.querySelector("#jarvis-session-status");\n    status.textContent = "Thinking...";\n    try {\n      const data = await requestNextQuestion(answer);\n      mount.querySelector("#jarvis-current-question").textContent = data.next_question || "No next question returned.";\n      status.textContent = JSON.stringify(data, null, 2);\n    } catch (error) {\n      status.textContent = "Unable to reach backend. Check the API base URL and Cloud Run/local backend.";\n    }\n  });\n})();\n',
         "wordpress_embed/README.md": "# WordPress Embed Kit\n\nPaste the contents of `embed.html` into a WordPress Custom HTML block.\n\nUpdate `data-api-base-url` to point at the deployed Python backend, such as a Google Cloud Run URL.\n\nThis is an embed kit only. It does not convert the backend to PHP.\n",
+        "Dockerfile": "FROM python:3.12-slim\n\nWORKDIR /app\nCOPY . /app\n\nENV PORT=8080\nEXPOSE 8080\n\nCMD [\"python3\", \"backend/app.py\", \"--serve\"]\n",
+        ".dockerignore": "__pycache__/\n*.pyc\n.env\n.git\n.gitignore\n",
+        "deploy_cloud_run.sh": "#!/usr/bin/env bash\nset -euo pipefail\n\nPROJECT_ID=${PROJECT_ID:-your-gcp-project-id}\nSERVICE_NAME=${SERVICE_NAME:-consultative-sales-api}\nREGION=${REGION:-us-central1}\n\ngcloud run deploy \"$SERVICE_NAME\" \\\n  --source . \\\n  --project \"$PROJECT_ID\" \\\n  --region \"$REGION\" \\\n  --allow-unauthenticated \\\n  --set-env-vars APP_ENV=production,AI_MODEL=gpt-4.1-mini\n",
         ".env.example": "OPENAI_API_KEY=\nAI_MODEL=gpt-4.1-mini\nAPP_ENV=development\n",
     }
 
@@ -2769,6 +2772,9 @@ def validate_consultative_sales_app_scaffold(project_root):
         "wordpress_embed/embed.html",
         "wordpress_embed/embed.js",
         "wordpress_embed/README.md",
+        "Dockerfile",
+        ".dockerignore",
+        "deploy_cloud_run.sh",
         ".env.example",
     ]
 
@@ -2779,6 +2785,13 @@ def validate_consultative_sales_app_scaffold(project_root):
     env_text = read_file_text(os.path.join(project_root, ".env.example"))
     if "OPENAI_API_KEY=" not in env_text:
         return False, "missing OPENAI_API_KEY in .env.example"
+
+    dockerfile_text = read_file_text(os.path.join(project_root, "Dockerfile"))
+    deploy_text = read_file_text(os.path.join(project_root, "deploy_cloud_run.sh"))
+    if "backend/app.py" not in dockerfile_text or "PORT=8080" not in dockerfile_text:
+        return False, "deployment scaffold missing backend server command"
+    if "gcloud run deploy" not in deploy_text:
+        return False, "deployment scaffold missing Cloud Run deploy command"
 
     embed_html = read_file_text(os.path.join(project_root, "wordpress_embed/embed.html"))
     embed_js = read_file_text(os.path.join(project_root, "wordpress_embed/embed.js"))
