@@ -749,7 +749,7 @@ def test_generated_backend_persists_session_state_across_calls():
             [
                 "python3",
                 "-c",
-                "import backend.app as app; first = app.build_next_question_response('We have missed delivery dates.'); second = app.build_next_question_response('We also have low OEE.', session_id=first['session_id']); print(first['session_id'] == second['session_id']); print(second['session_state']['buying_intent_score'] >= first['session_state']['buying_intent_score'])",
+                "import backend.app as app; first = app.build_next_question_response('We have missed delivery dates.'); second = app.build_next_question_response('We also have low OEE.', session_id=first['session_id']); print(first['session_id'] == second['session_id']); print(second['session_state']['buying_intent_score'] >= first['session_state']['buying_intent_score']); print(len(second['session_state']['previous_answers']) == 2); print('missed delivery dates' in second['session_state']['known_pains']); print('low OEE' in second['session_state']['known_pains'])",
             ],
             cwd=project_root,
             text=True,
@@ -758,7 +758,7 @@ def test_generated_backend_persists_session_state_across_calls():
         )
 
         assert result.returncode == 0, result.stderr
-        assert result.stdout.count("True") == 2
+        assert result.stdout.count("True") == 5
 
 
 def test_generated_backend_contains_http_route_contract():
