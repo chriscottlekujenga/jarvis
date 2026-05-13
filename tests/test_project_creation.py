@@ -480,6 +480,9 @@ def test_build_consultative_sales_app_scaffold_creates_expected_files():
     assert "call_ai_model_stub" in scaffold["backend/app.py"]
     assert "build_next_question_response" in scaffold["backend/app.py"]
     assert "build_proposal_response" in scaffold["backend/app.py"]
+    assert "ConsultativeSalesRequestHandler" in scaffold["backend/app.py"]
+    assert "run_server" in scaffold["backend/app.py"]
+    assert "/api/next-question" in scaffold["backend/app.py"]
     assert "localBackendStub" in scaffold["frontend/script.js"]
     assert "renderBackendResponse" in scaffold["frontend/script.js"]
     assert "requestNextQuestion" in scaffold["frontend/script.js"]
@@ -725,6 +728,18 @@ def test_generated_backend_response_builder_contract_runs_directly():
         assert "ready" in result.stdout
         assert "missed delivery dates" in result.stdout
         assert "low OEE" in result.stdout
+
+
+def test_generated_backend_contains_http_route_contract():
+    scaffold = cli.build_consultative_sales_app_scaffold("lean_consulting_ai_sales_advisor")
+    backend = scaffold["backend/app.py"]
+
+    assert "BaseHTTPRequestHandler" in backend
+    assert "ConsultativeSalesRequestHandler" in backend
+    assert "do_POST" in backend
+    assert "/api/next-question" in backend
+    assert "ALLOWED_ORIGINS" in backend
+    assert "--serve" in backend
 
 def run_tests():
     test_items = [
