@@ -282,3 +282,14 @@ The regression suite now protects the generated `lean_consulting_ai_sales_adviso
 - accumulated `previous_answers`
 - accumulated matched pains
 - strongest observed buying-intent score preservation
+
+
+## Consultative Sales Generated App Regression Update
+
+Additional regression coverage now protects:
+- basic entity extraction for prospect and company names
+- urgency scoring from answer text
+- adaptive follow-up question selection when company/site context is missing
+- real generated HTTP route behavior for `/api/next-question`
+- local AI fallback behavior when `OPENAI_API_KEY` is absent
+- AI adapter contract markers including API mode and API error fallback

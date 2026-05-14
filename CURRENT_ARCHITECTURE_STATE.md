@@ -213,3 +213,28 @@ Next useful work:
 3. Add real AI provider adapter behind `call_ai_model()` while preserving deterministic fallback.
 4. Add generated-app smoke command that starts backend and exercises `/api/next-question`.
 5. Eventually externalize large scaffold strings into template files when string-maintenance cost becomes the bottleneck.
+
+
+## 2026-05-14 — Consultative Sales App Capability Update
+
+The generated consultative sales app now includes a stronger MVP backend architecture.
+
+Added since the last checkpoint:
+- Deterministic extraction of basic `prospect_name`, `company_name`, and `urgency_score`.
+- Adaptive next-question logic based on known pains, company/context, urgency, buying intent, and proposal readiness.
+- Real generated backend HTTP smoke coverage for `/api/next-question`.
+- A real AI provider adapter behind `call_ai_model()` using stdlib HTTP calls.
+- Safe `local_stub` behavior when `OPENAI_API_KEY` is not configured.
+- Safe `api_error_fallback` behavior if the provider call fails.
+
+Current AI boundary:
+- `call_ai_model()` keeps deterministic fallback behavior for tests and local development.
+- When `OPENAI_API_KEY` exists, the generated backend can call the configured OpenAI-compatible Responses API URL.
+- `AI_MODEL` and `OPENAI_API_URL` are environment-configurable.
+
+Current generated app behavior:
+- Persists session state.
+- Accumulates previous answers and matched pains.
+- Extracts basic sales context.
+- Asks more context-aware follow-up questions.
+- Can run locally as an HTTP backend and accept real POST requests.
