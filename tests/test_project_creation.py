@@ -1044,6 +1044,17 @@ def test_generated_backend_uses_ai_question_when_available():
         assert "api" in result.stdout
 
 
+
+def test_generated_sales_app_includes_local_smoke_script():
+    scaffold = cli.build_consultative_sales_app_scaffold("lean_consulting_ai_sales_advisor")
+    script = scaffold["scripts/smoke_next_question.sh"]
+
+    assert "python3 backend/app.py --serve" in script
+    assert "curl -s -X POST http://localhost:8080/api/next-question" in script
+    assert "Content-Type: application/json" in script
+    assert "session_id" not in script
+
+
 def run_tests():
     test_items = [
         (name, fn)
