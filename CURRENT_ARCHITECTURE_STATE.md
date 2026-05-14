@@ -278,3 +278,16 @@ The frontend renders:
 - expected outcomes
 
 The backend smoke response has been manually validated to include a proposal payload, and the generated frontend now has the DOM hooks and rendering function needed to show it.
+
+## 2026-05-14 — Generated Sales Proposal Preview Expanded
+
+The generated consultative sales frontend now displays a fuller proposal preview.
+
+The frontend renders:
+- proposal title
+- recommended offer
+- diagnosed pains
+- expected outcomes
+- recommended next step
+
+A temporary generated app was manually validated. The frontend markers were present, and the backend smoke script returned a proposal payload containing diagnosed pains, expected outcomes, and next step.

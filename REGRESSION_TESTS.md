@@ -320,3 +320,11 @@ Additional regression coverage now protects:
 - frontend rendering function for proposal preview
 - use of `response.proposal`
 - expected outcomes rendering support
+
+## Generated Sales Proposal Preview Expansion Regression Update
+
+Additional regression coverage now protects:
+- diagnosed pains DOM hook
+- next-step DOM hook
+- frontend support for `diagnosed_pains`
+- frontend support for `next_step`
