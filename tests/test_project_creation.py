@@ -934,6 +934,37 @@ def test_generated_backend_extracts_ai_response_text_when_available():
         assert "What is the biggest operational issue affecting delivery right now?" in result.stdout
 
 
+
+def test_generated_backend_extracts_nested_provider_response_text():
+    with tempfile.TemporaryDirectory() as tmp:
+        ok, message = cli.create_project("Lean Consulting AI Sales Advisor", projects_root=tmp, project_type="web")
+        assert ok, message
+
+        project_root = os.path.join(tmp, "lean_consulting_ai_sales_advisor")
+        command = """
+import backend.app as app
+
+responses = [
+    {"response": {"output": [{"content": [{"text": "What constraint is slowing the team down most?"}]}]}},
+    {"response": {"choices": [{"message": {"content": "What have you already tried to fix the missed deliveries?"}}]}},
+]
+
+for ai in responses:
+    print(app.extract_ai_text(ai))
+"""
+        result = subprocess.run(
+            ["python3", "-c", command],
+            cwd=project_root,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+
+        assert result.returncode == 0, result.stderr
+        assert "What constraint is slowing the team down most?" in result.stdout
+        assert "What have you already tried to fix the missed deliveries?" in result.stdout
+
+
 def test_generated_backend_uses_ai_question_when_available():
     with tempfile.TemporaryDirectory() as tmp:
         ok, message = cli.create_project("Lean Consulting AI Sales Advisor", projects_root=tmp, project_type="web")
