@@ -293,3 +293,13 @@ Additional regression coverage now protects:
 - real generated HTTP route behavior for `/api/next-question`
 - local AI fallback behavior when `OPENAI_API_KEY` is absent
 - AI adapter contract markers including API mode and API error fallback
+
+## Generated Sales AI Question Safety Regression Update
+
+Additional regression coverage now protects:
+- extracting AI question text from OpenAI-style `output_text`
+- extracting nested provider text from `output[].content[].text`
+- extracting chat-compatible text from `choices[].message.content`
+- using AI question text when valid
+- rejecting empty, whitespace-only, non-question, and overly long AI output
+- preserving deterministic fallback behavior when AI output is unusable

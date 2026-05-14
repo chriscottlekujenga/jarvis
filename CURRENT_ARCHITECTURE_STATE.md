@@ -238,3 +238,18 @@ Current generated app behavior:
 - Extracts basic sales context.
 - Asks more context-aware follow-up questions.
 - Can run locally as an HTTP backend and accept real POST requests.
+
+## 2026-05-14 — Generated Sales AI Question Safety
+
+The generated consultative sales backend now uses AI-provided next-question text only when it passes a safety/shape check.
+
+Protected behavior:
+- Extracts text from multiple provider response formats.
+- Accepts clean question text from the AI adapter.
+- Rejects empty output.
+- Rejects whitespace-only output.
+- Rejects overly long AI text.
+- Rejects AI text that does not look like a question.
+- Falls back to deterministic next-question logic when AI output is unusable.
+
+This keeps the generated app AI-capable without allowing malformed provider output to break the sales conversation flow.
