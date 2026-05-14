@@ -1082,6 +1082,19 @@ def test_generated_sales_frontend_displays_proposal_preview():
 
 
 
+
+def test_generated_sales_frontend_displays_diagnosed_pains_and_next_step():
+    scaffold = cli.build_consultative_sales_app_scaffold("lean_consulting_ai_sales_advisor")
+    html = scaffold["frontend/index.html"]
+    script = scaffold["frontend/script.js"]
+
+    assert 'id="proposal-pains"' in html
+    assert 'id="proposal-next-step"' in html
+    assert "diagnosed_pains" in script
+    assert "next_step" in script
+
+
+
 def run_tests():
     test_items = [
         (name, fn)
