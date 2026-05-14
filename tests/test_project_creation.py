@@ -898,6 +898,19 @@ def test_generated_backend_contains_http_route_contract():
     assert "ALLOWED_ORIGINS" in backend
     assert "--serve" in backend
 
+
+def test_generated_app_env_example_documents_ai_runtime_settings():
+    scaffold = cli.build_consultative_sales_app_scaffold("lean_consulting_ai_sales_advisor")
+    env_text = scaffold[".env.example"]
+
+    assert "APP_ENV=development" in env_text
+    assert "OPENAI_API_KEY=" in env_text
+    assert "AI_MODEL=gpt-4.1-mini" in env_text
+    assert "OPENAI_API_URL=https://api.openai.com/v1/responses" in env_text
+    assert env_text.count("OPENAI_API_KEY=") == 1
+    assert env_text.count("AI_MODEL=") == 1
+
+
 def run_tests():
     test_items = [
         (name, fn)
