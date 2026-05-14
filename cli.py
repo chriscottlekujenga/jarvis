@@ -2746,7 +2746,7 @@ def build_consultative_sales_app_scaffold(project_name):
         ".dockerignore": "__pycache__/\n*.pyc\n.env\n.git\n.gitignore\n",
         "deploy_cloud_run.sh": "#!/usr/bin/env bash\nset -euo pipefail\n\nPROJECT_ID=${PROJECT_ID:-your-gcp-project-id}\nSERVICE_NAME=${SERVICE_NAME:-consultative-sales-api}\nREGION=${REGION:-us-central1}\n\ngcloud run deploy \"$SERVICE_NAME\" \\\n  --source . \\\n  --project \"$PROJECT_ID\" \\\n  --region \"$REGION\" \\\n  --allow-unauthenticated \\\n  --set-env-vars APP_ENV=production,AI_MODEL=gpt-4.1-mini\n",
         ".env.example": '# App environment\nAPP_ENV=development\n\n# Optional real AI adapter\n# Leave OPENAI_API_KEY blank to use deterministic local_stub mode.\nOPENAI_API_KEY=\nAI_MODEL=gpt-4.1-mini\nOPENAI_API_URL=https://api.openai.com/v1/responses\n',
-        "scripts/smoke_next_question.sh": '#!/usr/bin/env bash\nset -euo pipefail\n\ncd "$(dirname "$0")"\n\npython3 backend/app.py --serve &\nSERVER_PID=$!\n\ncleanup() {\n  kill "$SERVER_PID" >/dev/null 2>&1 || true\n}\ntrap cleanup EXIT\n\nsleep 1\n\ncurl -s -X POST http://localhost:8080/api/next-question \\\n  -H "Content-Type: application/json" \\\n  -d \'{"answer":"My name is Chris from Acme Manufacturing. We have urgent missed delivery dates."}\'\n\necho\n',
+        "scripts/smoke_next_question.sh": '#!/usr/bin/env bash\nset -euo pipefail\n\ncd "$(dirname "$0")/.."\n\npython3 backend/app.py --serve &\nSERVER_PID=$!\n\ncleanup() {\n  kill "$SERVER_PID" >/dev/null 2>&1 || true\n}\ntrap cleanup EXIT\n\nsleep 1\n\ncurl -s -X POST http://localhost:8080/api/next-question \\\n  -H "Content-Type: application/json" \\\n  -d \'{"answer":"My name is Chris from Acme Manufacturing. We have urgent missed delivery dates."}\'\n\necho\n',
     }
 
 
