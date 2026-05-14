@@ -1055,6 +1055,16 @@ def test_generated_sales_app_includes_local_smoke_script():
     assert "session_id" not in script
 
 
+
+def test_generated_sales_wordpress_readme_mentions_smoke_script():
+    scaffold = cli.build_consultative_sales_app_scaffold("lean_consulting_ai_sales_advisor")
+    readme = scaffold["wordpress_embed/README.md"]
+
+    assert "## Local smoke test" in readme
+    assert "bash scripts/smoke_next_question.sh" in readme
+    assert "/api/next-question" in readme
+
+
 def run_tests():
     test_items = [
         (name, fn)
