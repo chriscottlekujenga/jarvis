@@ -935,6 +935,62 @@ def test_generated_backend_extracts_ai_response_text_when_available():
 
 
 
+
+def test_generated_backend_rejects_bad_ai_question_text():
+    with tempfile.TemporaryDirectory() as tmp:
+        ok, message = cli.create_project("Lean Consulting AI Sales Advisor", projects_root=tmp, project_type="web")
+        assert ok, message
+
+        project_root = os.path.join(tmp, "lean_consulting_ai_sales_advisor")
+        command = """
+import backend.app as app
+
+bad_questions = [
+    {'response': {'output_text': ''}},
+    {'response': {'output_text': '   '}},
+    {'response': {'output_text': 'This is not a question'}},
+    {'response': {'output_text': 'Q' * 301 + '?'}},
+]
+
+for ai in bad_questions:
+    print(repr(app.extract_ai_text(ai)))
+"""
+        result = subprocess.run(
+            ["python3", "-c", command],
+            cwd=project_root,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+
+        assert result.returncode == 0, result.stderr
+        assert result.stdout.strip().splitlines() == ["''", "''", "''", "''"]
+
+
+def test_generated_backend_accepts_clean_ai_question_text():
+    with tempfile.TemporaryDirectory() as tmp:
+        ok, message = cli.create_project("Lean Consulting AI Sales Advisor", projects_root=tmp, project_type="web")
+        assert ok, message
+
+        project_root = os.path.join(tmp, "lean_consulting_ai_sales_advisor")
+        command = """
+import backend.app as app
+
+ai = {'response': {'output_text': '   What operational constraint is most affecting delivery this week?   '}}
+print(app.extract_ai_text(ai))
+"""
+        result = subprocess.run(
+            ["python3", "-c", command],
+            cwd=project_root,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+
+        assert result.returncode == 0, result.stderr
+        assert result.stdout.strip() == "What operational constraint is most affecting delivery this week?"
+
+
 def test_generated_backend_extracts_nested_provider_response_text():
     with tempfile.TemporaryDirectory() as tmp:
         ok, message = cli.create_project("Lean Consulting AI Sales Advisor", projects_root=tmp, project_type="web")
