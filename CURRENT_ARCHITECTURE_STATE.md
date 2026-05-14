@@ -267,3 +267,14 @@ The script:
 - shuts the backend down afterward
 
 This has been manually validated from a temporary generated project and returned a real `status`, `session_id`, `next_question`, proposal payload, and `local_stub` AI mode.
+
+## 2026-05-14 — Generated Sales Proposal Preview UI
+
+The generated consultative sales frontend now displays a proposal preview from the backend response.
+
+The frontend renders:
+- proposal title
+- recommended offer
+- expected outcomes
+
+The backend smoke response has been manually validated to include a proposal payload, and the generated frontend now has the DOM hooks and rendering function needed to show it.

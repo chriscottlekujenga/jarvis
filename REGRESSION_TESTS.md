@@ -311,3 +311,12 @@ Additional regression coverage now protects:
 - the script starts `backend/app.py --serve`
 - the script posts to `/api/next-question`
 - the WordPress README documents the smoke script
+
+## Generated Sales Proposal Preview Regression Update
+
+Additional regression coverage now protects:
+- proposal preview DOM hooks in the generated frontend
+- proposal title, offer, and outcomes elements
+- frontend rendering function for proposal preview
+- use of `response.proposal`
+- expected outcomes rendering support
