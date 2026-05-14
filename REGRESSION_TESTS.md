@@ -303,3 +303,11 @@ Additional regression coverage now protects:
 - using AI question text when valid
 - rejecting empty, whitespace-only, non-question, and overly long AI output
 - preserving deterministic fallback behavior when AI output is unusable
+
+## Generated Sales App Smoke Script Regression Update
+
+Additional regression coverage now protects:
+- generated `scripts/smoke_next_question.sh` exists
+- the script starts `backend/app.py --serve`
+- the script posts to `/api/next-question`
+- the WordPress README documents the smoke script

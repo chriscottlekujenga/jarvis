@@ -253,3 +253,17 @@ Protected behavior:
 - Falls back to deterministic next-question logic when AI output is unusable.
 
 This keeps the generated app AI-capable without allowing malformed provider output to break the sales conversation flow.
+
+## 2026-05-14 — Generated Sales App Manual Smoke Test
+
+The generated consultative sales app now includes a local smoke script:
+
+    scripts/smoke_next_question.sh
+
+The script:
+- starts the generated Python backend
+- posts a sample answer to `/api/next-question`
+- prints the JSON response
+- shuts the backend down afterward
+
+This has been manually validated from a temporary generated project and returned a real `status`, `session_id`, `next_question`, proposal payload, and `local_stub` AI mode.
