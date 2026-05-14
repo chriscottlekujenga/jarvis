@@ -268,3 +268,17 @@ Needed tests:
 - file targeting chooses dependency file when explicitly requested
 - main_script remains default only when no better target exists
 
+
+## Consultative Sales Generated App Regression Coverage
+
+The regression suite now protects the generated `lean_consulting_ai_sales_advisor` scaffold behavior, including:
+- generated frontend/backend API contract
+- `/api/next-question` backend route
+- `call_ai_model()` AI boundary seam
+- deterministic local fallback behavior
+- SQLite-backed session persistence
+- frontend `session_id` round trip
+- persisted sessions across repeated backend calls
+- accumulated `previous_answers`
+- accumulated matched pains
+- strongest observed buying-intent score preservation

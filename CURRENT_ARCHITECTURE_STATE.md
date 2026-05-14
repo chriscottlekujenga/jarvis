@@ -173,3 +173,43 @@ Prevent vague, duplicate, malformed, noop, or weak plans before execution.
 ## Next Major Expansion After Planner Hardening
 Multi-file orchestration.
 
+
+## 2026-05-13 — Consultative Sales App Scaffold Progress
+
+Recent commits advanced the generated `lean_consulting_ai_sales_advisor` web app from static scaffold toward a working deployable MVP architecture.
+
+Completed:
+- Added generated Python backend HTTP route for `/api/next-question`.
+- Connected generated frontend to backend contract with `fetch()`.
+- Added WordPress embed-kit scaffold.
+- Added Cloud Run deployment scaffold and onboarding README notes.
+- Added generated backend session persistence using SQLite.
+- Added frontend `session_id` handling.
+- Added accumulated session memory:
+  - `previous_answers` accumulates across calls.
+  - matched pains accumulate instead of being overwritten.
+  - strongest observed buying-intent score is preserved.
+- Added regression coverage for frontend/backend API contract, AI boundary contract, session persistence, and accumulated session memory.
+
+Current generated app capability:
+- Creates frontend, backend, prompts, schemas, service module, WordPress embed kit, and deployment scaffold.
+- Runs locally with deterministic fallback behavior.
+- Accepts prospect answers through the frontend.
+- Calls the backend API.
+- Tracks and persists `session_id`.
+- Reloads persisted session state.
+- Builds a basic proposal-readiness response.
+
+Architecture decision:
+- WordPress remains the presentation/embed layer.
+- Python backend remains the consultative reasoning and AI orchestration layer.
+- Do not convert backend to PHP.
+- Do not move static scaffold templates to a database yet.
+- Continue using targeted Python AST/scaffold extraction commands for large scaffold inspection.
+
+Next useful work:
+1. Add deterministic extraction of prospect name, company name, and urgency signals from answers.
+2. Improve adaptive question selection using accumulated session state.
+3. Add real AI provider adapter behind `call_ai_model()` while preserving deterministic fallback.
+4. Add generated-app smoke command that starts backend and exercises `/api/next-question`.
+5. Eventually externalize large scaffold strings into template files when string-maintenance cost becomes the bottleneck.
