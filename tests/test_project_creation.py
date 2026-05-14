@@ -761,6 +761,31 @@ def test_generated_backend_persists_session_state_across_calls():
         assert result.stdout.count("True") == 5
 
 
+
+def test_generated_backend_extracts_basic_entities_and_urgency():
+    with tempfile.TemporaryDirectory() as tmp:
+        ok, message = cli.create_project("Lean Consulting AI Sales Advisor", projects_root=tmp, project_type="web")
+        assert ok, message
+
+        project_root = os.path.join(tmp, "lean_consulting_ai_sales_advisor")
+        result = subprocess.run(
+            [
+                "python3",
+                "-c",
+                "import backend.app as app; response = app.build_next_question_response('My name is Chris from Acme Manufacturing. We have an urgent deadline and missed delivery dates.'); state = response['session_state']; print(state['prospect_name']); print(state['company_name']); print(state['urgency_score'] > 0)",
+            ],
+            cwd=project_root,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+
+        assert result.returncode == 0, result.stderr
+        assert "Chris" in result.stdout
+        assert "Acme Manufacturing" in result.stdout
+        assert "True" in result.stdout
+
+
 def test_generated_backend_contains_http_route_contract():
     scaffold = cli.build_consultative_sales_app_scaffold("lean_consulting_ai_sales_advisor")
     backend = scaffold["backend/app.py"]
