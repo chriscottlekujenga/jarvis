@@ -689,7 +689,8 @@ def test_generated_backend_contains_api_boundary_contract():
 
     assert "OPENAI_API_KEY" in backend
     assert "AI_MODEL" in backend
-    assert "api_ready" in backend
+    assert "api" in backend
+    assert "api_error_fallback" in backend
     assert "local_stub" in backend
     assert "call_ai_model" in backend
     assert "build_next_question_response" in backend
@@ -712,6 +713,31 @@ def test_validate_consultative_sales_app_scaffold_fails_when_response_builder_mi
 
         assert not ok
         assert "build_next_question_response" in message
+
+
+
+def test_generated_backend_ai_adapter_uses_local_stub_without_api_key():
+    with tempfile.TemporaryDirectory() as tmp:
+        ok, message = cli.create_project("Lean Consulting AI Sales Advisor", projects_root=tmp, project_type="web")
+        assert ok, message
+
+        project_root = os.path.join(tmp, "lean_consulting_ai_sales_advisor")
+        result = subprocess.run(
+            [
+                "python3",
+                "-c",
+                "import os; os.environ.pop('OPENAI_API_KEY', None); import backend.app as app; result = app.call_ai_model('next_question_prompt.txt', {'answer': 'test'}); print(result['ai_mode']); print(result['model']); print(result['payload_keys'])",
+            ],
+            cwd=project_root,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+
+        assert result.returncode == 0, result.stderr
+        assert "local_stub" in result.stdout
+        assert "gpt-4.1-mini" in result.stdout
+        assert "answer" in result.stdout
 
 
 def test_generated_backend_response_builder_contract_runs_directly():
