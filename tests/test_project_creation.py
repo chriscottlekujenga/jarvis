@@ -1065,6 +1065,23 @@ def test_generated_sales_wordpress_readme_mentions_smoke_script():
     assert "/api/next-question" in readme
 
 
+
+def test_generated_sales_frontend_displays_proposal_preview():
+    scaffold = cli.build_consultative_sales_app_scaffold("lean_consulting_ai_sales_advisor")
+    html = scaffold["frontend/index.html"]
+    script = scaffold["frontend/script.js"]
+
+    assert 'id="proposal-preview"' in html
+    assert 'id="proposal-title"' in html
+    assert 'id="proposal-offer"' in html
+    assert 'id="proposal-outcomes"' in html
+    assert "function renderProposalPreview" in script
+    assert "response.proposal" in script
+    assert "recommended_offer" in script
+    assert "expected_outcomes" in script
+
+
+
 def run_tests():
     test_items = [
         (name, fn)
