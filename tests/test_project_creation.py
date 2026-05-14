@@ -911,6 +911,52 @@ def test_generated_app_env_example_documents_ai_runtime_settings():
     assert env_text.count("AI_MODEL=") == 1
 
 
+
+def test_generated_backend_extracts_ai_response_text_when_available():
+    with tempfile.TemporaryDirectory() as tmp:
+        ok, message = cli.create_project("Lean Consulting AI Sales Advisor", projects_root=tmp, project_type="web")
+        assert ok, message
+
+        project_root = os.path.join(tmp, "lean_consulting_ai_sales_advisor")
+        result = subprocess.run(
+            [
+                "python3",
+                "-c",
+                "import backend.app as app; ai = {'ai_mode': 'api', 'response': {'output_text': 'What is the biggest operational issue affecting delivery right now?'}}; print(app.extract_ai_text(ai))",
+            ],
+            cwd=project_root,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+
+        assert result.returncode == 0, result.stderr
+        assert "What is the biggest operational issue affecting delivery right now?" in result.stdout
+
+
+def test_generated_backend_uses_ai_question_when_available():
+    with tempfile.TemporaryDirectory() as tmp:
+        ok, message = cli.create_project("Lean Consulting AI Sales Advisor", projects_root=tmp, project_type="web")
+        assert ok, message
+
+        project_root = os.path.join(tmp, "lean_consulting_ai_sales_advisor")
+        result = subprocess.run(
+            [
+                "python3",
+                "-c",
+                "import backend.app as app; app.call_ai_model = lambda prompt_name, payload: {'ai_mode': 'api', 'response': {'output_text': 'Which workflow constraint is causing the most missed deliveries?'}}; response = app.build_next_question_response('We are behind on deliveries at Acme.'); print(response['next_question']); print(response['ai_mode'])",
+            ],
+            cwd=project_root,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+
+        assert result.returncode == 0, result.stderr
+        assert "Which workflow constraint is causing the most missed deliveries?" in result.stdout
+        assert "api" in result.stdout
+
+
 def run_tests():
     test_items = [
         (name, fn)
