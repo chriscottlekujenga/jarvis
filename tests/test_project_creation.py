@@ -810,6 +810,57 @@ def test_generated_backend_asks_context_question_when_company_missing():
         assert "company" in question or "site" in question or "process area" in question
 
 
+
+def test_generated_backend_http_route_smoke():
+    with tempfile.TemporaryDirectory() as tmp:
+        ok, message = cli.create_project("Lean Consulting AI Sales Advisor", projects_root=tmp, project_type="web")
+        assert ok, message
+
+        project_root = os.path.join(tmp, "lean_consulting_ai_sales_advisor")
+        command = """
+import json
+import subprocess
+import sys
+import time
+import urllib.request
+
+server = subprocess.Popen(
+    [sys.executable, "backend/app.py", "--serve"],
+    cwd=".",
+    stdout=subprocess.PIPE,
+    stderr=subprocess.PIPE,
+    text=True,
+)
+try:
+    time.sleep(1)
+    req = urllib.request.Request(
+        "http://127.0.0.1:8080/api/next-question",
+        data=json.dumps({"answer": "We have urgent missed delivery dates."}).encode("utf-8"),
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+    body = urllib.request.urlopen(req, timeout=5).read().decode("utf-8")
+    data = json.loads(body)
+    print(data["status"])
+    print(bool(data["session_id"]))
+    print(data["session_state"]["urgency_score"] > 0)
+finally:
+    server.terminate()
+    server.wait(timeout=5)
+"""
+        result = subprocess.run(
+            ["python3", "-c", command],
+            cwd=project_root,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+
+        assert result.returncode == 0, result.stderr
+        assert "ready" in result.stdout
+        assert result.stdout.count("True") == 2
+
+
 def test_generated_backend_contains_http_route_contract():
     scaffold = cli.build_consultative_sales_app_scaffold("lean_consulting_ai_sales_advisor")
     backend = scaffold["backend/app.py"]
